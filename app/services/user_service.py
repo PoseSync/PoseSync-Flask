@@ -10,16 +10,15 @@ def process_squat(data):
     left_hip = next((item for item in landmarks if item.get("id") == 23), None)
     right_hip = next((item for item in landmarks if item.get("id") == 24), None)
 
-    h_center_x = (left_hip.get('x') + right_hip.get('x')) / 2
-    h_center_z = (left_hip.get('z') + right_hip.get('z')) / 2
-
     # 왼쪽 무릎, 왼쪽 고관절, 오른쪽 무릎, 오른쪽 고관절 landmark를 매개변수로 넘겨준 후 theta 얻기
     left_knee = next((item for item in landmarks if item.get('id') == 25), None)
     right_knee = next((item for item in landmarks if item.get('id') == 26), None)
     theta = get_theta(left_hip, right_hip, left_knee, right_knee)
 
     # 대퇴골 길이, 양쪽 대퇴골 길이는 같다라는 가정 하에 왼쪽 무릎과 고관절만 매개변수로 넘겨줌
-    femur = get_femur(left_hip, left_knee)
+    # femur = get_femur(left_hip, left_knee)
+    # 대퇴골 길이는 추후에 DB 연동해서 가져올 예정
+    femur = 43
 
     # 고관절과 무릎 사이의 거리, 양쪽 고관절 높이가 같다라는 가정 하에 왼쪽 고관절과 왼쪽 무릎만 매개변수로 넘겨줌
     delta_y = height_hip_knee(left_hip, left_knee)

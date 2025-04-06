@@ -15,6 +15,7 @@ def register_user_socket(socketio):
         clients[phone_number] = request.sid
 
     # 소켓 연결 끊음
+    # 신경 안 써도 될듯 이 부분.
     @socketio.on('disconnection')
     def handle_disconnect(data):
         print('클라이언트 연결 끊음')
