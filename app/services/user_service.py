@@ -30,12 +30,16 @@ def process_squat(data):
     # pi 구하기
     pi = get_pi(left_hip, right_hip)
 
-    # 각 무릎의 x, z 좌표 계산
-    left_knee_x = left_hip.get('x') + r * np.cos(pi - (theta / 2))
-    left_knee_z = left_hip.get('z') + r * np.sin(pi - (theta / 2))
+    # 라디안으로 변환
+    pi_rad = math.radians(pi)
+    theta_rad = math.radians(theta)
 
-    right_knee_x = right_hip.get('x') + r * np.cos(pi + (theta / 2))
-    right_knee_z = right_hip.get('z') + r * np.sin(pi + (theta / 2))
+    # 각 무릎의 x, z 좌표 계산 (라디안 값으로 삼각함수 계산)
+    left_knee_x = left_hip.get('x') + r * np.cos(pi_rad - (theta_rad / 2))
+    left_knee_z = left_hip.get('z') + r * np.sin(pi_rad - (theta_rad / 2))
+
+    right_knee_x = right_hip.get('x') + r * np.cos(pi_rad + (theta_rad / 2))
+    right_knee_z = right_hip.get('z') + r * np.sin(pi_rad + (theta_rad / 2))
 
     for item in landmarks:
         if item['id'] == 25:
