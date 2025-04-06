@@ -1,0 +1,10 @@
+# Python 캐시
+__pycache__/
+*.py[cod]
+
+# 가상 환경
+venvs/
+
+# IDE 설정
+.vscode/
+.idea/
