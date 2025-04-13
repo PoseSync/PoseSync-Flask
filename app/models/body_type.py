@@ -4,7 +4,7 @@ from sqlalchemy import Enum
 
 # body_type 테이블 생성
 class BodyType(db.Model):
-    __tablename__ = 'body_types'
+    __tablename__ = 'body_type'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey('user.user_id'), nullable=False)
