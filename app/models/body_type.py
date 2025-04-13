@@ -19,8 +19,6 @@ class BodyType(db.Model):
     upper_body_type = db.Column(Enum('LONG', 'AVG', 'SHORT', name='upper_enum'), nullable=True)
     lower_body_type = db.Column(Enum('LONG', 'AVG', 'SHORT', name='lower_enum'), nullable=True)
     torso_length_type = db.Column(Enum('LONG', 'AVG', 'SHORT', name='torso_enum'), nullable=True)
-    neck_type = db.Column(Enum('LONG', 'AVG', 'SHORT', name='neck_enum'), nullable=True)
-    leg_type = db.Column(Enum('LONG', 'AVG', 'SHORT', name='leg_enum'), nullable=True)
 
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
