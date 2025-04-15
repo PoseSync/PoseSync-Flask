@@ -9,7 +9,7 @@ class BodyType(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey('user.user_id'), nullable=False)
 
-    arm_type = db.Column(Enum('LONG', 'AVG', 'SHORT', name='arm_enum'), nullable=True)
+    arm_type = db.Column(Enum('LONG', 'AVG', 'SHORT', name='arm_enum'), nullable=True) # 상완길이 타입
     femur_type = db.Column(Enum('LONG', 'AVG', 'SHORT', name='femur_enum'), nullable=True)
     tibia_type = db.Column(Enum('LONG', 'AVG', 'SHORT', name='tibia_enum'), nullable=True)
 
