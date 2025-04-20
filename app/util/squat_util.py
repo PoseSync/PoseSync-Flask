@@ -29,7 +29,7 @@ def get_theta(left_hip, right_hip, left_knee, right_knee):
     theta_deg = np.degrees(theta_rad)
     return theta_deg
 
-# 대퇴골 길이 L 구하기 
+# 대퇴골 길이 L 구하기
 def get_femur(left_hip, left_knee):
     x_result = (left_knee.get('x') - left_hip.get('x')) ** 2
     y_result = (left_knee.get('y') - left_hip.get('y')) ** 2
