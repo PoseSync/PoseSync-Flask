@@ -94,3 +94,4 @@ def register_user_socket(socketio):
         except Exception as e:
             print(f"❌ 데이터 처리 중 예외 발생: {e}")
             emit('result', {'error': '서버 내부 오류가 발생했습니다.'})
+
