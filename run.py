@@ -9,6 +9,7 @@ from app.models.body_type import BodyType
 from app.models.body_data import BodyData
 from app.controllers.user_controller import save_body_data, body_data_bp
 
+
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins='*')
 
@@ -41,4 +42,4 @@ def home():
 
 
 if __name__ == '__main__':
-    socketio.run(app, host='127.0.0.1', port=5000, debug=True)
+    socketio.run(app, host='127.0.0.1', port=5000, debug=True, allow_unsafe_werkzeug=True)

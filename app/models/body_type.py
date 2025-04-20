@@ -2,14 +2,14 @@ from . import db
 from datetime import datetime, UTC
 from sqlalchemy import Enum
 
-# body_type 테이블 생성
+# 상대좌표계 점-점 거리 저장용
 class BodyType(db.Model):
     __tablename__ = 'body_type'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey('user.user_id'), nullable=False)
 
-    arm_type = db.Column(Enum('LONG', 'AVG', 'SHORT', name='arm_enum'), nullable=True)
+    arm_type = db.Column(Enum('LONG', 'AVG', 'SHORT', name='arm_enum'), nullable=True) # 상완길이 타입
     femur_type = db.Column(Enum('LONG', 'AVG', 'SHORT', name='femur_enum'), nullable=True)
     tibia_type = db.Column(Enum('LONG', 'AVG', 'SHORT', name='tibia_enum'), nullable=True)
 
