@@ -5,8 +5,25 @@ from app.util.math_util import normalize_vector
 from app.services.body_service.body_type_service import get_user_arm_type
 import math
 
+# 운동 횟수 전역 변수
+cnt = 0
+# 운동이 1회 되었는지, 예를 들면 무릎 y좌표가 엉덩이 y좌표까지 안 왔으면 운동이 완료된 것이 아니므로 False 유지
+isCompleted = False
+
 def process_squat(data):
+    # 전역 변수 사용 선언
+    global cnt, isCompleted
+
     landmarks = data.get("landmarks", [])
+
+    # 현재 자세에서 엉덩이의 y좌표가 무릎의 y좌표 밑까지 왔으면 1회 추가
+    if (landmarks[PoseLandmark.LEFT_KNEE].get("y") <= landmarks[PoseLandmark.LEFT_HIP].get("y") and isCompleted == False):
+        cnt += 1
+        isCompleted = True
+
+    # 다시 엉덩이의 y좌표와 무릎의 y좌표가 어느정도 차이 나면 isCompleted = False로 설정해 다시 카운팅 설정 가능하도록
+    if (landmarks[PoseLandmark.LEFT_HIP] - landmarks[PoseLandmark.LEFT_KNEE] >= 0.1 and isCompleted == True):
+        isCompleted = False
 
     # 양쪽 고관절 중심 좌표 계산
     left_hip = landmarks[PoseLandmark.LEFT_HIP]
@@ -47,6 +64,9 @@ def process_squat(data):
     landmarks[PoseLandmark.LEFT_KNEE]['z'] = left_knee_z
     landmarks[PoseLandmark.RIGHT_KNEE]['x'] = right_knee_x
     landmarks[PoseLandmark.RIGHT_KNEE]['z'] = right_knee_z
+
+    # 반환 객체의 cnt 프로퍼티 추가
+    data["cnt"] = cnt
 
     return data
 
