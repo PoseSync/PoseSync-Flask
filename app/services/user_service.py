@@ -1,8 +1,8 @@
 import numpy as np
-from app.util.squat_util import get_theta, get_femur, height_hip_knee, get_pi
+from app.util.squat_util import get_theta, height_hip_knee, get_pi
 from app.util.pose_landmark_enum import PoseLandmark
 from app.util.math_util import normalize_vector
-from app.util.body_type_util import get_user_arm_type
+from app.services.body_service.body_type_service import get_user_arm_type
 import math
 
 def process_squat(data):

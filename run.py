@@ -4,9 +4,6 @@ from app.sockets.user_socket import register_user_socket
 from app.models import db  # models/__init__.py에서 정의한 db
 import config
 from sqlalchemy import inspect
-from app.models.user import User
-from app.models.body_type import BodyType
-from app.models.body_data import BodyData
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins='*')
@@ -35,4 +32,4 @@ def home():
     return 'Flask + SQLAlchemy + MySQL + WebSocket 실행 중!'
 
 if __name__ == '__main__':
-    socketio.run(app, host='127.0.0.1', port=5000, debug=True)
+    socketio.run(app, host='127.0.0.1', port=5000, debug=True, allow_unsafe_werkzeug=True)

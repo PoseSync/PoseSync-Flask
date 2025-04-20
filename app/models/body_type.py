@@ -2,7 +2,7 @@ from . import db
 from datetime import datetime, UTC
 from sqlalchemy import Enum
 
-# body_type 테이블 생성
+# 상대좌표계 점-점 거리 저장용
 class BodyType(db.Model):
     __tablename__ = 'body_types'
 
