@@ -11,3 +11,4 @@ class User(db.Model):
 
     body_types = db.relationship('BodyType', backref='user', lazy=True)
     body_data = db.relationship('BodyData', backref='user', lazy=True)
+    exercise_results = db.relationship('ExerciseResult', backref='user', lazy=True)
