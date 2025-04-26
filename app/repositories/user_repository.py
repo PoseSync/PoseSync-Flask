@@ -1,6 +1,16 @@
 from app.models import db
 from app.models.user import User
 from app.models.body_data import BodyData
+from app.models.record import Record
+
+# 운동 기록 저장
+def save_record(exercise_result):
+    # INSERT문 생성
+    db.session.add(exercise_result)
+    # DB에 쿼리 날림
+    db.session.flush()
+    # 저장된 객체 반환
+    return exercise_result
 
 def create_user(phone_number):
     # 엔티티 생성

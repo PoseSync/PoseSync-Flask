@@ -1,5 +1,5 @@
 from app.services.user_service import process_squat, process_squat, process_dumbel_sholderPress
-from app.services.user_info_service import save_user_and_body_data_and_body_type
+from app.services.user_info_service import save_user_and_body_data_and_body_type, save_record_success_service, save_record_failed_service
 from flask import Blueprint, jsonify, request
 
 
@@ -13,6 +13,15 @@ def handle_data_controller(data):
 
 
     return result
+
+# 운동 성공적 종료됐을 때 DB에 저장하는 컨트롤러 함수
+def save_record_success_controller(record):
+    return save_record_success_service(record)
+
+# 운동 중단 종료됐을 때 DB에 저장하는 컨트롤러 함수
+def save_record_failed_controller(record):
+    return save_record_failed_service(record)
+    
 
 # Blueprint 등록
 # 'body_data' => BluePrint ID(식별자) 역할

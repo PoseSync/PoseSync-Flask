@@ -1,7 +1,61 @@
-from app.repositories.user_repository import create_user, insert_body_data, insert_body_type
+from app.repositories.user_repository import create_user, insert_body_data, insert_body_type, save_record
 from app.models import db
 from app.models.body_type import BodyType
+from app.services.user_service import cnt
+from app.models.exercise_result import ExerciseResult
+from app.models.user import User
 
+# 운동이 중간에 종료됐을 때 record 저장
+def save_record_failed_service(record):
+    phone_number = record.phone_number
+
+    # phone_number로 User 테이블 조회
+    user = User.query.filter_by(phone_number=phone_number).first()
+
+    if user is None:
+        raise ValueError(f"해당 전화번호({phone_number})를 가진 사용자가 없습니다.")
+    
+    user_id = user.user_id
+
+    # 2025/04/26 코멘트(성재)
+    # ExerciseResult 객체 생성할 때 운동횟수는 Service 계층에서의 cnt 변수로 저장
+    # 그런데 Service 계층에서 운동횟수를 각 운동 클래스마다 세고 있어서 어떤 운동의 운동횟수인지 저장하기 위해서 다수의 조건문 필요
+    # 이게 최선인지 여러분들의 지혜가 필요
+    # 스쿼트 운동 저장
+    if (record.exercise_name == "squat"):
+        exercise_result = ExerciseResult(
+            user_id=user_id,
+            exercise_name=record.exercise_name,
+            count=cnt,
+            weight=record.exercise_weight
+        )
+        return save_record(exercise_result)
+    return ""
+
+# 운동이 성공적으로 끝났을 때 record 저장
+def save_record_success_service(record):
+    # record 안에 있는 phone_number 가져오기
+    phone_number = record.phone_number
+
+    # phone_number로 User 테이블 조회
+    user = User.query.filter_by(phone_number=phone_number).first()
+
+    if user is None:
+        raise ValueError(f"해당 전화번호({phone_number})를 가진 사용자가 없습니다.")
+    
+    user_id = user.user_id
+
+    # 여기서 ExerciseResult 객체 생성 후 Repository 계층으로 전달
+    exercise_result = ExerciseResult(
+        user_id=user_id,
+        exercise_name=record.exercise_name,
+        count=record.exercise_cnt,
+        weight=record.exercise_weight
+    )
+    return save_record(exercise_result)
+
+
+# user table, body_data, body_type 테이블에 데이터 저장
 def save_user_and_body_data_and_body_type(data):
     try:
         phone_number = data.get('phoneNumber')
