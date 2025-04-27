@@ -2,6 +2,7 @@ from flask_socketio import emit, SocketIO, disconnect
 from flask import request
 from app.controllers.user_controller import handle_data_controller, save_record_success_controller, save_record_failed_controller
 from app.models.record import Record
+import time
 
 socketio = SocketIO(cors_allowed_origins="*")
 # 각 클라이언트 세션 저장하는 딕셔너리
@@ -139,6 +140,7 @@ def register_user_socket(socketio):
 
     @socketio.on('exercise_data')
     def handle_exercise_data(data):
+        start_time = time.perf_counter()
         try:
             phone_number = data.get('phoneNumber')
 
@@ -154,6 +156,10 @@ def register_user_socket(socketio):
 
 
             result = handle_data_controller(data)
+            elapsed_ms = (time.perf_counter() - start_time) * 1000
+            elapsed_ms = round(elapsed_ms, 2)  # 소수점 두 자리까지
+            # result 안에 latency로 latency 데이터 삽입
+            result['latency'] = elapsed_ms
 
             sid = clients.get(phone_number)
             if sid:
