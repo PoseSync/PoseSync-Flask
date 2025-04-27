@@ -1,7 +1,7 @@
 from app.repositories.user_repository import create_user, insert_body_data, insert_body_type, save_record
 from app.models import db
 from app.models.body_type import BodyType
-from app.services.user_service import cnt
+from app.services.squatService.squatService import squat_count
 from app.models.exercise_result import ExerciseResult
 from app.models.user import User
 
@@ -26,7 +26,7 @@ def save_record_failed_service(record):
         exercise_result = ExerciseResult(
             user_id=user_id,
             exercise_name=record.exercise_name,
-            count=cnt,
+            count=squat_count,
             weight=record.exercise_weight
         )
         return save_record(exercise_result)
