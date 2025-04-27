@@ -158,6 +158,7 @@ def register_user_socket(socketio):
             sid = clients.get(phone_number)
             if sid:
                 print(f"📤 결과 전송 대상 SID: {sid}")
+                print(f"❌ 결과 데이터 => ", result)
                 socketio.emit('result', result, to=sid)
             else:
                 print(f"⚠️ 클라이언트 SID를 찾을 수 없음: {phone_number}")
@@ -165,4 +166,3 @@ def register_user_socket(socketio):
         except Exception as e:
             print(f"❌ 데이터 처리 중 예외 발생: {e}")
             emit('result', {'error': '서버 내부 오류가 발생했습니다.'})
-
