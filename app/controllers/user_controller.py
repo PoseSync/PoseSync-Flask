@@ -8,6 +8,7 @@ def handle_data_controller(data):
     if data.get('exerciseType') == 'squat':
         # 스쿼트 로직 처리 서비스에 data 넘겨주고 비즈니스 로직 처리 위임
         corrected_landmarks = process_squat(data)
+        print("##### 반환된 landmarks => " + corrected_landmarks)
         return corrected_landmarks
     elif data.get('exerciseType') == 'dumbel_sholder_press':
         result =  process_dumbbell_sholderPress(data)
