@@ -38,8 +38,9 @@ def process_squat(data):
         if left_hip['y'] <= start_hip_y + 0.02:  # 거의 원래 높이에 복귀했으면
             squat_count += 1  # 스쿼트 횟수 추가
             is_descending = True  # 다시 내려가기 시작
+    data["landmarks"] = landmarks
 
-    return landmarks
+    return data
 
 
 def calculate_joint_lengths(landmarks):
