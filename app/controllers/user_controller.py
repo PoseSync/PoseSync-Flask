@@ -1,4 +1,5 @@
-from app.services.user_service import process_squat, process_squat, process_dumbel_sholderPress
+from app.services.squatService.squatService import process_squat
+from app.services.sholderPressService.sholderPressService import process_dumbbell_sholderPress
 from app.services.user_info_service import save_user_and_body_data_and_body_type, save_record_success_service, save_record_failed_service
 from flask import Blueprint, jsonify, request
 
@@ -9,7 +10,7 @@ def handle_data_controller(data):
         corrected_landmarks = process_squat(data)
         return corrected_landmarks
     elif data.get('exerciseType') == 'dumbel_sholder_press':
-        result =  process_dumbel_sholderPress(data)
+        result =  process_dumbbell_sholderPress(data)
 
 
 
