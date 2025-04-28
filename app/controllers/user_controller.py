@@ -10,10 +10,7 @@ def handle_data_controller(data):
         return process_squat(data)
     elif data.get('exerciseType') == 'dumbel_sholder_press':
         result =  process_dumbbell_sholderPress(data)
-
-
-
-    return result
+        return result
 
 # 운동 성공적 종료됐을 때 DB에 저장하는 컨트롤러 함수
 def save_record_success_controller(record):
