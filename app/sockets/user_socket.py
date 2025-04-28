@@ -150,9 +150,9 @@ def register_user_socket(socketio):
 
             print(f"🏋 데이터 수신: {data}")
 
-            for idx, point in enumerate(data.get('landmarks', [])):
-                label = LANDMARK_NAMES[idx] if idx < len(LANDMARK_NAMES) else f"포인트 {idx}"
-                print(f"{label:<8} [{idx:2d}]: x={point['x']}, y={point['y']}, z={point['z']}")
+            # for idx, point in enumerate(data.get('landmarks', [])):
+            #     label = LANDMARK_NAMES[idx] if idx < len(LANDMARK_NAMES) else f"포인트 {idx}"
+            #     print(f"{label:<8} [{idx:2d}]: x={point['x']}, y={point['y']}, z={point['z']}")
 
 
             result = handle_data_controller(data)
@@ -165,7 +165,8 @@ def register_user_socket(socketio):
             if sid:
                 print(f"📤 결과 전송 대상 SID: {sid}")
                 print(f"❌ 결과 데이터 => ", result)
-                socketio.emit('result', result, to=sid)
+                # socketio.emit('result', data, to=sid)    # 클라이언트 데이터 그대로 전달
+                socketio.emit('result', result, to=sid)  # 가이드라인 전용
             else:
                 print(f"⚠️ 클라이언트 SID를 찾을 수 없음: {phone_number}")
 
