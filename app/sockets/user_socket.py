@@ -2,6 +2,7 @@ from flask_socketio import emit, SocketIO, disconnect
 from flask import request
 from app.controllers.user_controller import handle_data_controller, save_record_success_controller, save_record_failed_controller
 from app.models.record import Record
+from app.util.calculate_landmark_distance import connections, calculate_named_linked_distances
 import time
 
 socketio = SocketIO(cors_allowed_origins="*")
@@ -11,6 +12,12 @@ clients = {}
 # 운동 기록 객체 저장 리스트
 # 운동 한 세트 끝낼때마다 맨 앞에 있는 요소 삭제
 record_list = []
+
+# 현재 클라이언트로 전달받은 데이터가 맨 처음 데이터인지 확인 => 이는 초기 유저 landmark의 점과 점 사이의 거리를 구하기 위함
+is_first = True
+
+# 유저의 각 landmark 사이의 거리
+distances = {}
 
 LANDMARK_NAMES = [
     "코", "왼눈안", "왼눈", "왼눈밖", "오른눈안", "오른눈", "오른눈밖", "왼귀", "오른귀",
@@ -103,16 +110,19 @@ def register_user_socket(socketio):
         save_record_success_controller(record_list[0])
         # 원래 했던 운동 record_list에서 삭제
         del record_list[0]
-        # 다음 운동 정보 전송
-        socketio.emit('next',
-                      {
-                          "exercise_name": record_list[0].exercise_name,
-                          "exercise_cnt": record_list[0].exercise_cnt,
-                          "exercise_weight": record_list[0].exercise_weight
-                      },
-                      to=removed
-                      )
+
+        # 다음 운동 정보 전송, record_list가 비어있지 않은 경우에만 전송
+        if record_list:
+            socketio.emit('next', {
+                "exercise_name": record_list[0].exercise_name,
+                "exercise_cnt": record_list[0].exercise_cnt,
+                "exercise_weight": record_list[0].exercise_weight
+            }, to=removed)
         if removed:
+            # 다음 세트 시작 시 다시 각 landmark 사이의 거리를 구하기 위해서 is_first 값 변경
+            is_first = True
+
+            # 소켓 연결 끊음.
             disconnect(sid=removed)
             print(f'🧹 연결 해제됨: {phone_number}')
         else:
@@ -140,8 +150,13 @@ def register_user_socket(socketio):
 
     @socketio.on('exercise_data')
     def handle_exercise_data(data):
+        global is_first, distances
         start_time = time.perf_counter()
         try:
+            # 처음 데이터 통신할 때 유저의 각 landmark 사이 거리 구한 후 distances 딕셔너리에 저장
+            if is_first:
+                is_first = False
+                distances = calculate_named_linked_distances(data.get('landmarks'), connections)
             phone_number = data.get('phoneNumber')
 
             # ❌ 연결되지 않은 사용자면 처리하지 않음
