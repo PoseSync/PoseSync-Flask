@@ -40,7 +40,7 @@ def process_squat(data):
             is_descending = True  # 다시 내려가기 시작
     data["landmarks"] = landmarks
     # 반환하는 data에 횟수 추가
-    data["squat_count"] = squat_count
+    data["count"] = squat_count
 
     return data
 
