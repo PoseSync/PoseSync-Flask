@@ -105,6 +105,7 @@ def register_user_socket(socketio):
     # 클라이언트 수동 연결 해제 요청 처리, 1세트 운동 성공적으로 끝났다는 의미이므로 DB에 Record 데이터 저장
     @socketio.on('disconnect_client')
     def handle_disconnect_client(data):
+        global is_first, distances
         phone_number = data.get('phoneNumber')
         removed = clients.pop(phone_number, None)
         # 1세트 운동 했을 때 성공적으로 저장
@@ -122,6 +123,7 @@ def register_user_socket(socketio):
         if removed:
             # 다음 세트 시작 시 다시 각 landmark 사이의 거리를 구하기 위해서 is_first 값 변경
             is_first = True
+            distances = {}
 
             # 소켓 연결 끊음.
             disconnect(sid=removed)
