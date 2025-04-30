@@ -129,7 +129,7 @@ def register_user_socket(socketio):
         else:
             print(f'⚠️ 연결 정보 없음: {phone_number}')
 
-    #TODO 운동 가이드라인 생성 소켓통신
+    # 운동 가이드라인 생성 소켓통신
     @socketio.on('exercise_data')
     def handle_exercise_data(data):
         global is_first, distances
@@ -151,7 +151,7 @@ def register_user_socket(socketio):
 
             print(f"🏋 데이터 수신: {data}")
 
-            # TODO  클라이언트 좌표를 세로로 출력
+            #  클라이언트 좌표를 세로로 출력
             # for idx, point in enumerate(data.get('landmarks', [])):
             #     label = LANDMARK_NAMES[idx] if idx < len(LANDMARK_NAMES) else f"포인트 {idx}"
             #     print(f"{label:<8} [{idx:2d}]: x={point['x']}, y={point['y']}, z={point['z']}")
