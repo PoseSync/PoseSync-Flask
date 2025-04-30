@@ -3,52 +3,21 @@ from app.util.pose_landmark_enum import PoseLandmark  # PoseLandmark Enum 불러
 
 # 1. 이름 기반 connections
 connections = {
-    "NOSE": ["LEFT_EYE_INNER", "RIGHT_EYE_INNER"],
-    "LEFT_EYE_INNER": ["NOSE", "LEFT_EYE"],
-    "LEFT_EYE": ["LEFT_EYE_INNER", "LEFT_EYE_OUTER"],
-    "LEFT_EYE_OUTER": ["LEFT_EYE", "LEFT_EAR"],
-    "RIGHT_EYE_INNER": ["NOSE", "RIGHT_EYE"],
-    "RIGHT_EYE": ["RIGHT_EYE_INNER", "RIGHT_EYE_OUTER"],
-    "RIGHT_EYE_OUTER": ["RIGHT_EYE", "RIGHT_EAR"],
-    "LEFT_EAR": ["LEFT_EYE_OUTER"],
-    "RIGHT_EAR": ["RIGHT_EYE_OUTER"],
+    # 팔 길이 + 어깨 너비
+    "LEFT_SHOULDER": ["LEFT_ELBOW", "RIGHT_SHOULDER"],  # 상완 | 어깨 너비
+    "LEFT_ELBOW": ["LEFT_WRIST"],                       # 왼쪽 전완
 
-    "MOUTH_LEFT": ["MOUTH_RIGHT"],
-    "MOUTH_RIGHT": ["MOUTH_LEFT"],
+    "RIGHT_SHOULDER": ["RIGHT_ELBOW"],                  # 오른쪽 상완
+    "RIGHT_ELBOW": ["RIGHT_WRIST"],                     # 오른쪽 전완
 
-    "LEFT_SHOULDER": ["RIGHT_SHOULDER", "LEFT_ELBOW"],
-    "RIGHT_SHOULDER": ["LEFT_SHOULDER", "RIGHT_ELBOW"],
+    # 다리 길이 + 고관절 너비
+    "LEFT_HIP": ["LEFT_KNEE", "RIGHT_HIP"],             # 대퇴골길이 | 고관절 너비
+    "LEFT_KNEE": ["LEFT_ANKLE"],                        # 정강이 길이
 
-    "LEFT_ELBOW": ["LEFT_SHOULDER", "LEFT_WRIST"],
-    "RIGHT_ELBOW": ["RIGHT_SHOULDER", "RIGHT_WRIST"],
-
-    "LEFT_WRIST": ["LEFT_ELBOW", "LEFT_PINKY", "LEFT_INDEX", "LEFT_THUMB"],
-    "RIGHT_WRIST": ["RIGHT_ELBOW", "RIGHT_PINKY", "RIGHT_INDEX", "RIGHT_THUMB"],
-
-    "LEFT_PINKY": ["LEFT_WRIST"],
-    "RIGHT_PINKY": ["RIGHT_WRIST"],
-
-    "LEFT_INDEX": ["LEFT_WRIST"],
-    "RIGHT_INDEX": ["RIGHT_WRIST"],
-
-    "LEFT_THUMB": ["LEFT_WRIST"],
-    "RIGHT_THUMB": ["RIGHT_WRIST"],
-
-    "LEFT_HIP": ["RIGHT_HIP", "LEFT_KNEE"],
-    "RIGHT_HIP": ["LEFT_HIP", "RIGHT_KNEE"],
-
-    "LEFT_KNEE": ["LEFT_HIP", "LEFT_ANKLE"],
-    "RIGHT_KNEE": ["RIGHT_HIP", "RIGHT_ANKLE"],
-
-    "LEFT_ANKLE": ["LEFT_KNEE", "LEFT_HEEL", "LEFT_FOOT_INDEX"],
-    "RIGHT_ANKLE": ["RIGHT_KNEE", "RIGHT_HEEL", "RIGHT_FOOT_INDEX"],
-
-    "LEFT_HEEL": ["LEFT_ANKLE"],
-    "RIGHT_HEEL": ["RIGHT_ANKLE"],
-
-    "LEFT_FOOT_INDEX": ["LEFT_ANKLE"],
-    "RIGHT_FOOT_INDEX": ["RIGHT_ANKLE"]
+    "RIGHT_HIP": ["RIGHT_KNEE"],                        # 오른쪽 대퇴골길이
+    "RIGHT_KNEE": ["RIGHT_ANKLE"]                       # 오른쪽 정강이 길이
 }
+
 
 # key: "LANDMARK1-LANDMARK2" → value: 간결한 영어 식별자
 bone_name_map = {
