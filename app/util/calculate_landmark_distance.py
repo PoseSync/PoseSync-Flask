@@ -50,6 +50,25 @@ connections = {
     "RIGHT_FOOT_INDEX": ["RIGHT_ANKLE"]
 }
 
+# key: "LANDMARK1-LANDMARK2" → value: 간결한 영어 식별자
+bone_name_map = {
+    "LEFT_SHOULDER-RIGHT_SHOULDER": "shoulder_width",
+    "LEFT_HIP-RIGHT_HIP": "hip_width",
+
+    "LEFT_SHOULDER-LEFT_ELBOW": "left_upper_arm_length",
+    "LEFT_ELBOW-LEFT_WRIST": "left_forearm_length",
+
+    "RIGHT_SHOULDER-RIGHT_ELBOW": "right_upper_arm_length",
+    "RIGHT_ELBOW-RIGHT_WRIST": "right_forearm_length",
+
+    "LEFT_HIP-LEFT_KNEE": "left_thigh_length",
+    "LEFT_KNEE-LEFT_ANKLE": "left_calf_length",
+
+    "RIGHT_HIP-RIGHT_KNEE": "right_thigh_length",
+    "RIGHT_KNEE-RIGHT_ANKLE": "right_calf_length"
+}
+
+
 
 # 2. 거리 계산 함수
 def calculate_distance(p1, p2):
@@ -83,3 +102,14 @@ def calculate_named_linked_distances(landmarks, connections):
             distances[key] = distance
 
     return distances
+
+
+# TODO 'LANDMARK1-LANDMARK2' key로 구성된 distances를  간결한 key로 바꿔서 반환
+def map_distances_to_named_keys(distances, name_map):
+
+    mapped = {}
+    for key, value in distances.items():
+        readable_key = name_map.get(key)
+        if readable_key:
+            mapped[readable_key] = value
+    return mapped

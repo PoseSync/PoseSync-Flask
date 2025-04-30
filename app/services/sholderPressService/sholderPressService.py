@@ -3,10 +3,10 @@ import numpy as np
 from app.services.body_service.body_spec_service import get_body_info_for_dumbbell_shoulder_press
 from app.util.math_util import normalize_vector
 from app.util.pose_landmark_enum import PoseLandmark
-from app.util.sholderPress_util import calculate_elbow_position_by_forward_angle, adjust_wrist_direction_to_preserve_min_angle
+from app.util.shoulderPress_util import calculate_elbow_position_by_forward_angle, adjust_wrist_direction_to_preserve_min_angle
 
 
-def process_dumbbell_sholderPress(data):
+def process_dumbbell_shoulderPress(data):
 
     landmarks = data.get("landmarks", [])
     phone_number = data.get("phoneNumber") # 개인식별자
