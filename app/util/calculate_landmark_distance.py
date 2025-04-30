@@ -73,7 +73,7 @@ def calculate_named_linked_distances(landmarks, connections):
     return distances
 
 
-# TODO 'LANDMARK1-LANDMARK2' key로 구성된 distances를  간결한 key로 바꿔서 반환
+# 'LANDMARK1-LANDMARK2' key로 구성된 distances를  간결한 key로 바꿔서 반환
 def map_distances_to_named_keys(distances, name_map):
 
     mapped = {}
