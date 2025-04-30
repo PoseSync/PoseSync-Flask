@@ -2,7 +2,8 @@ from flask_socketio import emit, SocketIO, disconnect
 from flask import request
 from app.controllers.user_controller import handle_data_controller, save_record_success_controller, save_record_failed_controller
 from app.models.record import Record
-from app.util.calculate_landmark_distance import connections, calculate_named_linked_distances
+from app.util.calculate_landmark_distance import connections, calculate_named_linked_distances, \
+    map_distances_to_named_keys, bone_name_map
 import time
 
 socketio = SocketIO(cors_allowed_origins="*")
@@ -128,35 +129,20 @@ def register_user_socket(socketio):
         else:
             print(f'⚠️ 연결 정보 없음: {phone_number}')
 
-        
-     # exercise_data로 데이터 넘겨받고 클라이언트로 반환
-    # 요청 데이터로 phoneNumber, exerciseType, landmarks 정보는 필수
-    # @socketio.on('exercise_data')
-    # def handle_exercise_data(data):
-    #     try:
-    #         print(f"🏋 데이터 수신: {data}")
-    #         result = handle_data_controller(data)
-    #
-    #         phone_number = data.get('phoneNumber')
-    #         sid = clients.get(phone_number)
-    #         if sid:
-    #             print(f"📤 결과 전송 대상 SID: {sid}")
-    #             socketio.emit('result', result, to=sid)
-    #         else:
-    #             print(f"⚠️ 클라이언트 SID를 찾을 수 없음: {phone_number}")
-    #     except Exception as e:
-    #         print(f"❌ 데이터 처리 중 예외 발생: {e}")
-    #         emit('result', {'error': '서버 내부 오류가 발생했습니다.'})
-
+    #TODO 운동 가이드라인 생성 소켓통신
     @socketio.on('exercise_data')
     def handle_exercise_data(data):
         global is_first, distances
         start_time = time.perf_counter()
         try:
-            # 처음 데이터 통신할 때 유저의 각 landmark 사이 거리 구한 후 distances 딕셔너리에 저장
+            # 처음 데이터 통신할 때 유저의 각 landmark 사이 거리(뼈 길이) 구한 후 distances 딕셔너리에 저장
             if is_first:
                 is_first = False
                 distances = calculate_named_linked_distances(data.get('landmarks'), connections)
+
+                # 랜드마크1-랜드마크2 로 표현된 key를 한단어로 변환
+                distances = map_distances_to_named_keys(distances, bone_name_map)
+
             phone_number = data.get('phoneNumber')
 
             # ❌ 연결되지 않은 사용자면 처리하지 않음
@@ -165,6 +151,7 @@ def register_user_socket(socketio):
 
             print(f"🏋 데이터 수신: {data}")
 
+            # TODO  클라이언트 좌표를 세로로 출력
             # for idx, point in enumerate(data.get('landmarks', [])):
             #     label = LANDMARK_NAMES[idx] if idx < len(LANDMARK_NAMES) else f"포인트 {idx}"
             #     print(f"{label:<8} [{idx:2d}]: x={point['x']}, y={point['y']}, z={point['z']}")
