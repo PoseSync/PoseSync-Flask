@@ -145,7 +145,7 @@ def correct_lunge_pose_for_lunge(data):
         previous_hip_y = current_hip_y
         min_hip_y = current_hip_y
         data["landmarks"] = landmarks
-        data["lunge_count"] = completed_reps
+        data["count"] = completed_reps
         data["status"] = "standby"
         return data
 
@@ -174,7 +174,7 @@ def correct_lunge_pose_for_lunge(data):
     # 7. 최종 결과 반환
     # =====================
     data["landmarks"] = landmarks
-    data["lunge_count"] = completed_reps
+    data["count"] = completed_reps
     data["status"] = status
 
     return data

@@ -38,6 +38,25 @@ def process_squat(data):
         if left_hip['y'] <= start_hip_y + 0.02:  # 거의 원래 높이에 복귀했으면
             squat_count += 1  # 스쿼트 횟수 추가
             is_descending = True  # 다시 내려가기 시작
+
+    # ───────────────────────────────────────────────────────────
+    # y 오프셋 적용 전에 current_hip_y 계산
+    left_hip = landmarks[PoseLandmark.LEFT_HIP]
+    right_hip = landmarks[PoseLandmark.RIGHT_HIP]
+    current_hip_y = (left_hip['y'] + right_hip['y']) / 2
+
+    # 이제 offset 계산
+    offset = compute_y_offset(current_hip_y, start_hip_y, bottom_threshold=0.25)
+
+    # 가이드라인에 오프셋 적용
+    for lm_idx in [
+        PoseLandmark.LEFT_HIP, PoseLandmark.RIGHT_HIP,
+        PoseLandmark.LEFT_KNEE, PoseLandmark.RIGHT_KNEE
+    ]:
+        landmarks[lm_idx]['y'] += offset
+    # ───────────────────────────────────────────────────────────
+
+    
     data["landmarks"] = landmarks
     # 반환하는 data에 횟수 추가
     data["count"] = squat_count
@@ -126,3 +145,27 @@ def should_start_standup(start_hip_y, current_hip_y, threshold=0.25):
     내려가기 종료하고 올라가야 한다고 판단
     """
     return (current_hip_y - start_hip_y) >= threshold
+
+def compute_y_offset(current_hip_y, start_hip_y, bottom_threshold=0.25):
+    """
+    current_hip_y : 현재 골반 높이
+    start_hip_y   : 처음 선 상태 골반 높이
+    bottom_threshold : 내려갔다고 판단할 기준 (y 차이)
+    
+    반환값 : 계단식으로 변화하는 y 오프셋
+    """
+    depth = current_hip_y - start_hip_y
+    
+    # 1) 아직 내려가기 전(서 있는 상태)
+    if depth <= 0:
+        return +0.10   # 위로 0.1 만큼 크게 올려서 표시
+    
+    # 2) 내려가는 중: depth가 0→threshold에 걸쳐 0.10→-0.02로 선형 보간
+    if depth < bottom_threshold:
+        return 0.10 - (0.12) * (depth / bottom_threshold)
+    
+    # 3) 바닥 도달 후 올라오는 중: depth가 threshold→2*threshold에 걸쳐 -0.02→+0.10 보간
+    #    (최대 2배 깊이까지 올라옴을 가정)
+    over = min((depth - bottom_threshold) / bottom_threshold, 1.0)
+    return -0.02 + (0.12) * over
+
