@@ -3,14 +3,14 @@ import numpy as np
 from app.services.body_service.body_spec_service import get_body_info_for_dumbbell_shoulder_press
 from app.util.math_util import normalize_vector
 from app.util.pose_landmark_enum import PoseLandmark
-from app.util.shoulderPress_util import calculate_elbow_position_by_forward_angle, adjust_wrist_direction_to_preserve_min_angle
+from app.util.shoulderPress_util import calculate_elbow_position_by_forward_angle, \
+    adjust_wrist_direction_to_preserve_min_angle
 
 
 def process_dumbbell_shoulderPress(data):
-
     landmarks = data.get("landmarks", [])
-    phone_number = data.get("phoneNumber") # 개인식별자
-    bone_lengths = data.get("bone_lengths", {}) # 첫 exercise_date 패킷 연결에서 계산한 뼈 길이
+    phone_number = data.get("phoneNumber")  # 개인식별자
+    bone_lengths = data.get("bone_lengths", {})  # 첫 exercise_date 패킷 연결에서 계산한 뼈 길이
 
     # ✅ 사용자 체형 + 신체 길이 조회
     body_info = get_body_info_for_dumbbell_shoulder_press(phone_number)
@@ -23,17 +23,17 @@ def process_dumbbell_shoulderPress(data):
     # forearm_length = body_info["forearm_length"]
     # shoulder_width = body_info["shoulder_width"]
 
-    #어깨좌표 [0] : 왼쪽 [1] : 오른쪽
+    # 어깨좌표 [0] : 왼쪽 [1] : 오른쪽
     shoulders_coord = [
         landmarks[PoseLandmark.LEFT_SHOULDER],
         landmarks[PoseLandmark.RIGHT_SHOULDER]
     ]
-    #팔꿈치 좌표
+    # 팔꿈치 좌표
     elbows_coord = [
         landmarks[PoseLandmark.LEFT_ELBOW],
         landmarks[PoseLandmark.RIGHT_ELBOW]
     ]
-    #손목 좌표
+    # 손목 좌표
     wrists = [
         landmarks[PoseLandmark.LEFT_WRIST],
         landmarks[PoseLandmark.RIGHT_WRIST]
@@ -81,9 +81,16 @@ def process_dumbbell_shoulderPress(data):
 
         # ⬇ landmarks에 elbow 좌표 업데이트
         elbow_id = PoseLandmark.LEFT_ELBOW if side == 0 else PoseLandmark.RIGHT_ELBOW
+
+        # 원래 visibility 값 저장
+        elbow_visibility = landmarks[elbow_id].get('visibility', 1.0)
+
         landmarks[elbow_id]['x'] = elbow_pos[0]
         landmarks[elbow_id]['y'] = elbow_pos[1]
         landmarks[elbow_id]['z'] = elbow_pos[2]
+
+        # visibility 값 복원
+        landmarks[elbow_id]['visibility'] = elbow_visibility
 
         # 🟦 손목 위치 계산 (숄더프레스 기준 y+ 방향)
         wrist_pos = adjust_wrist_direction_to_preserve_min_angle(
@@ -99,11 +106,18 @@ def process_dumbbell_shoulderPress(data):
 
         # ⬇ landmarks에 wrist 좌표 업데이트
         wrist_id = PoseLandmark.LEFT_WRIST if side == 0 else PoseLandmark.RIGHT_WRIST
+
+        # 원래 visibility 값 저장
+        wrist_visibility = landmarks[wrist_id].get('visibility', 1.0)
+
         landmarks[wrist_id]['x'] = wrist_pos[0]
         landmarks[wrist_id]['y'] = wrist_pos[1]
         landmarks[wrist_id]['z'] = wrist_pos[2]
 
-    return data #수정된 data
+        # visibility 값 복원
+        landmarks[wrist_id]['visibility'] = wrist_visibility
+
+    return data  # 수정된 data
 
 
 """
