@@ -10,13 +10,18 @@ def process_dumbbell_shoulderPress(data):
 
     landmarks = data.get("landmarks", [])
     phone_number = data.get("phoneNumber") # 개인식별자
+    bone_lengths = data.get("bone_lengths", {}) # 첫 exercise_date 패킷 연결에서 계산한 뼈 길이
 
     # ✅ 사용자 체형 + 신체 길이 조회
     body_info = get_body_info_for_dumbbell_shoulder_press(phone_number)
     arm_type = body_info["arm_type"]
-    upper_arm_length = body_info["upper_arm_length"]
-    forearm_length = body_info["forearm_length"]
-    shoulder_width = body_info["shoulder_width"]
+    upper_arm_length = bone_lengths["left_upper_arm_length"]
+    forearm_length = bone_lengths["left_forearm_length"]
+    shoulder_width = bone_lengths["shoulder_width"]
+    # db조회해서 뼈길이 가져오기
+    # upper_arm_length = body_info["upper_arm_length"]
+    # forearm_length = body_info["forearm_length"]
+    # shoulder_width = body_info["shoulder_width"]
 
     #어깨좌표 [0] : 왼쪽 [1] : 오른쪽
     shoulders_coord = [
