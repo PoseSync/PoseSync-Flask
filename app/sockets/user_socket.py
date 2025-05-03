@@ -4,6 +4,7 @@ from app.controllers.user_controller import handle_data_controller, save_record_
 from app.models.record import Record
 from app.util.calculate_landmark_distance import connections, calculate_named_linked_distances, \
     map_distances_to_named_keys, bone_name_map
+from app.util.pose_landmark_enum import PoseLandmark   # id→공식명 enum
 import time
 
 socketio = SocketIO(cors_allowed_origins="*")
@@ -43,6 +44,8 @@ def register_user_socket(socketio):
         # 생성된 Record 객체 record_list에 저장
         record_list.append(record)
         clients[phone_number] = request.sid
+        global is_first
+        is_first = True #첫 서버연결 때 운동 패킷 첫 연결여부 True
         print(f' 클라이언트 연결됨 : {phone_number} -> SID {request.sid}')
 
     # 운동 세트 시작할 때
@@ -62,16 +65,17 @@ def register_user_socket(socketio):
 
     # 소켓 연결 끊음
     # 신경 안 써도 될듯 이 부분.
-    # @socketio.on('disconnection')
-    # def handle_disconnect(data):
-    #     print('클라이언트 연결 끊음')
-    #     phone_number = data.get('phoneNumber')
-    #     disconnected_sid = request.sid
-    #     for phone_number, sid in list(clients.items()):
-    #         if sid == disconnected_sid:
-    #             del clients[phone_number]
-    #             print(f'phone_number {phone_number} 연결 해제 처리 완료')
-    #             break
+    @socketio.on('disconnection')
+    def handle_disconnect(data):
+        print('클라이언트 연결 끊음')
+        phone_number = data.get('phoneNumber')
+        disconnected_sid = request.sid
+        is_first = True
+        for phone_number, sid in list(clients.items()):
+            if sid == disconnected_sid:
+                del clients[phone_number]
+                print(f'phone_number {phone_number} 연결 해제 처리 완료')
+                break
         
     # 중간에 운동을 끊었을 때, 횟수는 현재 진행중인 service 계층에서의 cnt로 Record 객체를 업데이트하고 저장
     @socketio.on('exercise_disconnect')
@@ -138,13 +142,25 @@ def register_user_socket(socketio):
         start_time = time.perf_counter()
         try:
             # 처음 데이터 통신할 때 유저의 각 landmark 사이 거리(뼈 길이) 구한 후 distances 딕셔너리에 저장
+
+            # --- 첫 패킷일 때 -----------------------------------------------------------------------
             if is_first:
                 is_first = False
-                distances = calculate_named_linked_distances(data.get('landmarks'), connections)
 
-                # 랜드마크1-랜드마크2 로 표현된 key를 한단어로 변환
+                # id → name 필드 보강
+                for lm in data['landmarks']:
+                    lm['name'] = PoseLandmark(lm['id']).name
+
+                distances = calculate_named_linked_distances(   #뼈 길이
+                    data['landmarks'], connections
+                )
                 distances = map_distances_to_named_keys(distances, bone_name_map)
 
+                print(f"뼈 길이 : {distances}")
+
+            # 👉 매번 내려 보내는 데이터 객체에 붙임
+            data["bone_lengths"] = distances
+            #-----------------------------------------------------------------------------------------
             phone_number = data.get('phoneNumber')
 
             # ❌ 연결되지 않은 사용자면 처리하지 않음
