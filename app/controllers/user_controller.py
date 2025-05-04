@@ -2,6 +2,7 @@ from app.services.squatService.squatService import process_squat
 from app.services.sholderPressService.sholderPressService import process_dumbbell_shoulderPress
 from app.services.user_info_service import save_user_and_body_data_and_body_type, save_record_success_service, save_record_failed_service
 from flask import Blueprint, jsonify, request
+from app.services.lungeService.lungeService import correct_lunge_pose_for_lunge
 
 
 def handle_data_controller(data):
@@ -10,6 +11,9 @@ def handle_data_controller(data):
         return process_squat(data)
     elif data.get('exerciseType') == 'dumbbell_shoulder_press':
         result =  process_dumbbell_shoulderPress(data)
+        return result
+    elif data.get('exerciseType') == 'lunge':
+        result = correct_lunge_pose_for_lunge(data)
         return result
 
 # 운동 성공적 종료됐을 때 DB에 저장하는 컨트롤러 함수
