@@ -149,7 +149,9 @@ def register_user_socket(socketio):
             # 클라이언트에서 받은 원본 랜드마크 데이터
             landmarks = data.get('landmarks', [])
 
+
             print(f'클라이언트에서 받자마자 => {landmarks}')
+
 
             # id → name 필드 보강
             for lm in data['landmarks']:
@@ -202,11 +204,13 @@ def register_user_socket(socketio):
 
 
             print('⭕')
+
             # 레이턴시 측정
             elapsed_ms = (time.perf_counter() - start_time) * 1000
             result['latency'] = round(elapsed_ms, 2)
 
             print('♥❌')
+
             # 중요: requestId를 결과에 포함
             result['requestId'] = request_id
 
@@ -218,7 +222,9 @@ def register_user_socket(socketio):
             # 결과 전송
             sid = clients.get(phone_number)
             if sid:
+
                 print(f'클라이언트에게 전송 => {result}')
+
                 socketio.emit('result', result, to=sid)
             else:
                 print(f"⚠️ 클라이언트 SID를 찾을 수 없음: {phone_number}")
