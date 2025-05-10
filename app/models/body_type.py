@@ -1,5 +1,6 @@
 from . import db
-from datetime import datetime, UTC
+# from datetime import datetime, UTC
+from datetime import datetime, timezone
 from sqlalchemy import Enum
 
 # 상대좌표계 점-점 거리 저장용
@@ -20,5 +21,9 @@ class BodyType(db.Model):
     lower_body_type = db.Column(Enum('LONG', 'AVG', 'SHORT', name='lower_enum'), nullable=True)
     torso_length_type = db.Column(Enum('LONG', 'AVG', 'SHORT', name='torso_enum'), nullable=True)
 
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+    # created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
+    # updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+
+     # 수정된 부분: UTC를 timezone.utc로 변경
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))

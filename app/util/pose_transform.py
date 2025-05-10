@@ -63,7 +63,9 @@ def _calculate_axes(lms: List[Landmark]) -> Dict[str, Vec3]:
 # ──────────────────────────────────────────────────────────────────────────────
 def process_pose_landmarks(raw: List[Landmark]) -> Tuple[List[Landmark], TransformData]:
 
+
     print(f'정변환 전 => {raw}')
+
 
     """
     1) Hip-center 원점 이동
@@ -158,3 +160,4 @@ def reverse_pose_landmarks(
     print(f'역변환 후 => {restored}')
 
     return restored
+
