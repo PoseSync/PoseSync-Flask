@@ -11,13 +11,12 @@ history = {
 }
 timestamps = deque(maxlen=3)
 
-def calculate_acceleration(data):
+def calculate_acceleration(landmarks):  # 인자명을 landmarks로 바꿈
     current_time = time.time()
     timestamps.append(current_time)
 
-    # enum으로 인덱스 지정
-    head = data["landmarks"][PoseLandmark.MOUTH_LEFT]
-    pelvis = data["landmarks"][PoseLandmark.LEFT_HIP]
+    head = landmarks[PoseLandmark.MOUTH_LEFT]
+    pelvis = landmarks[PoseLandmark.LEFT_HIP]
 
     head_vec = np.array([head["x"], head["y"], head["z"]])
     pelvis_vec = np.array([pelvis["x"], pelvis["y"], pelvis["z"]])
@@ -37,4 +36,4 @@ def calculate_acceleration(data):
             "head_acceleration": a_head.tolist(),
             "pelvis_acceleration": a_pelvis.tolist()
         }
-    return None  # 아직 계산 불가
+    return None

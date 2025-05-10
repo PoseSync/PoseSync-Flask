@@ -1,5 +1,6 @@
 # 실측 기반 cm 단위 신체 길이 저장 테이블
-from datetime import datetime, UTC
+# from datetime import datetime, UTC
+from datetime import datetime, timezone
 
 from app.models import db
 
@@ -20,5 +21,9 @@ class BodyDataCm(db.Model):
     lower_body_length_cm = db.Column(db.Float)
     neck_length_cm = db.Column(db.Float)
 
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+    # created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
+    # updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+
+         # 수정된 부분: UTC를 timezone.utc로 변경
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
