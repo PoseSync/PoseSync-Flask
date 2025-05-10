@@ -1,3 +1,5 @@
+import math
+
 from flask_socketio import emit, SocketIO, disconnect
 from flask import request
 from app.controllers.user_controller import handle_data_controller, save_record_success_controller, save_record_failed_controller
@@ -6,10 +8,14 @@ from app.util.calculate_landmark_distance import connections, calculate_named_li
     map_distances_to_named_keys, bone_name_map
 from app.util.pose_landmark_enum import PoseLandmark   # id→공식명 enum
 import time
+from app.util.pose_transform import process_pose_landmarks, reverse_pose_landmarks
 
 socketio = SocketIO(cors_allowed_origins="*")
 # 각 클라이언트 세션 저장하는 딕셔너리
 clients = {}
+
+# 테스트 모드 전역 변수
+TEST_OFFSET_ENABLED = False  # 테스트 모드 활성화
 
 # 운동 기록 객체 저장 리스트
 # 운동 한 세트 끝낼때마다 맨 앞에 있는 요소 삭제
@@ -135,61 +141,134 @@ def register_user_socket(socketio):
         else:
             print(f'⚠️ 연결 정보 없음: {phone_number}')
 
-    # 운동 가이드라인 생성 소켓통신
     @socketio.on('exercise_data')
     def handle_exercise_data(data):
         global is_first, distances
         start_time = time.perf_counter()
         try:
-            # 처음 데이터 통신할 때 유저의 각 landmark 사이 거리(뼈 길이) 구한 후 distances 딕셔너리에 저장
+            # 클라이언트에서 받은 원본 랜드마크 데이터
+            landmarks = data.get('landmarks', [])
 
-            # --- 첫 패킷일 때 -----------------------------------------------------------------------
+            # print(f'클라이언트에서 받자마자 => {landmarks}')
+
+            # id → name 필드 보강
+            for lm in data['landmarks']:
+                lm['name'] = PoseLandmark(lm['id']).name
+
+
+            # 처음 데이터 통신할 때 뼈 길이 계산
             if is_first:
                 is_first = False
 
-                # id → name 필드 보강
-                for lm in data['landmarks']:
-                    lm['name'] = PoseLandmark(lm['id']).name
-
-                distances = calculate_named_linked_distances(   #뼈 길이
+                # 뼈 길이 계산
+                distances = calculate_named_linked_distances(  # 뼈 길이
                     data['landmarks'], connections
                 )
                 distances = map_distances_to_named_keys(distances, bone_name_map)
-
                 print(f"뼈 길이 : {distances}")
+            #--------------------------------------------------------------------------------------
 
-            # 👉 매번 내려 보내는 데이터 객체에 붙임
+            # 사람 중심 좌표계로 변환 및 정규화
+            transformed_landmarks, transform_data = process_pose_landmarks(landmarks)
+
+
+
+            # 변환된 랜드마크로
+            data['landmarks'] = transformed_landmarks
+            data['__transformData'] = transform_data
+
+            # 서버 내부에서 사용할 수 있도록 뼈 길이 데이터 추가
             data["bone_lengths"] = distances
-            #-----------------------------------------------------------------------------------------
+
+            # requestId 추출
+            request_id = data.get('requestId')
             phone_number = data.get('phoneNumber')
 
-            # ❌ 연결되지 않은 사용자면 처리하지 않음
+            # 연결되지 않은 사용자면 처리하지 않음
             if phone_number not in clients:
                 return
 
-            # print(f"🏋 데이터 수신: {data}")
-
-            #  클라이언트 좌표를 세로로 출력
-            # for idx, point in enumerate(data.get('landmarks', [])):
-            #     label = LANDMARK_NAMES[idx] if idx < len(LANDMARK_NAMES) else f"포인트 {idx}"
-            #     print(f"{label:<8} [{idx:2d}]: x={point['x']}, y={point['y']}, z={point['z']}")
-
-
+            # 컨트롤러에서 데이터 처리 (가이드라인 생성)
             result = handle_data_controller(data)
-            elapsed_ms = (time.perf_counter() - start_time) * 1000
-            elapsed_ms = round(elapsed_ms, 2)  # 소수점 두 자리까지
-            # result 안에 latency로 latency 데이터 삽입
-            result['latency'] = elapsed_ms
 
+            # 가이드라인 랜드마크를 시각화를 위해 원본 좌표계로 역변환
+            visualization_landmarks = reverse_pose_landmarks(
+                result['landmarks'],
+                transform_data
+            )
+
+            # 시각화용 랜드마크 추가하고 원본 제거
+            result['visualizationLandmarks'] = visualization_landmarks
+
+
+            # print('⭕')
+            # 레이턴시 측정
+            elapsed_ms = (time.perf_counter() - start_time) * 1000
+            result['latency'] = round(elapsed_ms, 2)
+
+            # print('♥❌')
+            # 중요: requestId를 결과에 포함
+            result['requestId'] = request_id
+
+            # 클라이언트에서 사용하지 않는 데이터 바로 삭제
+            del result['landmarks']  # 원본 변환 랜드마크 제거 (네트워크 부하 감소)
+            del result['__transformData']  # 변환 데이터 삭제
+            del result['bone_lengths']  # 뼈 길이 데이터 삭제
+
+            # 결과 전송
             sid = clients.get(phone_number)
             if sid:
-                # print(f"📤 결과 전송 대상 SID: {sid}")
-                # print(f"❌ 결과 데이터 => ", result)
-                # socketio.emit('result', data, to=sid)    # 클라이언트 데이터 그대로 전달
-                socketio.emit('result', result, to=sid)  # 가이드라인 전용
+                # print(f'클라이언트에게 전송 => {result}')
+                socketio.emit('result', result, to=sid)
             else:
                 print(f"⚠️ 클라이언트 SID를 찾을 수 없음: {phone_number}")
 
         except Exception as e:
             print(f"❌ 데이터 처리 중 예외 발생: {e}")
+            import traceback
+            traceback.print_exc()
             emit('result', {'error': '서버 내부 오류가 발생했습니다.'})
+
+
+# 테스트 메서드
+##########################################################################################################
+
+# 1. 기본 오프셋 테스트
+def apply_test_offset_basic(result):
+    """모든 랜드마크에 일정한 오프셋 적용"""
+    if 'landmarks' in result:
+        for landmark in result['landmarks']:
+            landmark['x'] += 0.2  # 오른쪽으로 이동
+            landmark['y'] += 0.1  # 아래로 이동
+
+
+# 2. 파동 패턴 테스트
+def apply_test_offset_wave(result):
+    """파동 패턴으로 랜드마크 이동 (더 확실한 시각적 차이)"""
+    if 'landmarks' in result:
+        for idx, landmark in enumerate(result['landmarks']):
+            # 사인파 패턴으로 x, y 오프셋
+            offset_x = 0.15 * math.sin(idx * 0.5)
+            offset_y = 0.1 * math.cos(idx * 0.5)
+            landmark['x'] += offset_x
+            landmark['y'] += offset_y
+
+
+# 3. 특정 관절 확대 테스트
+def apply_test_offset_joints(result):
+    """주요 관절만 크게 이동"""
+    if 'landmarks' in result:
+        key_joints = {
+            11: (0.3, 0.0),  # 왼쪽 어깨
+            12: (-0.3, 0.0),  # 오른쪽 어깨
+            13: (0.4, 0.2),  # 왼쪽 팔꿈치
+            14: (-0.4, 0.2),  # 오른쪽 팔꿈치
+            15: (0.5, 0.3),  # 왼쪽 손목
+            16: (-0.5, 0.3),  # 오른쪽 손목
+        }
+
+        for idx, landmark in enumerate(result['landmarks']):
+            if idx in key_joints:
+                offset_x, offset_y = key_joints[idx]
+                landmark['x'] += offset_x
+                landmark['y'] += offset_y
