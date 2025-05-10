@@ -167,7 +167,7 @@ def register_user_socket(socketio):
             if phone_number not in clients:
                 return
 
-            print(f"🏋 데이터 수신: {data}")
+            # print(f"🏋 데이터 수신: {data}")
 
             #  클라이언트 좌표를 세로로 출력
             # for idx, point in enumerate(data.get('landmarks', [])):
@@ -183,8 +183,8 @@ def register_user_socket(socketio):
 
             sid = clients.get(phone_number)
             if sid:
-                print(f"📤 결과 전송 대상 SID: {sid}")
-                print(f"❌ 결과 데이터 => ", result)
+                # print(f"📤 결과 전송 대상 SID: {sid}")
+                # print(f"❌ 결과 데이터 => ", result)
                 # socketio.emit('result', data, to=sid)    # 클라이언트 데이터 그대로 전달
                 socketio.emit('result', result, to=sid)  # 가이드라인 전용
             else:
