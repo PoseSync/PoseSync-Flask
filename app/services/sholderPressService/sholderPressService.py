@@ -6,33 +6,11 @@ from app.util.pose_landmark_enum import PoseLandmark
 from app.util.shoulderPress_util import calculate_elbow_position_by_forward_angle, \
     adjust_wrist_direction_to_preserve_min_angle
 
-# AI 모델 가져오기
-from app.ai.ai_model import fall_model
-
-# 가속도 계산
-from app.util.calculate_landmark_accerlation import calculate_acceleration
-
 
 def process_dumbbell_shoulderPress(data):
     landmarks = data.get("landmarks", [])
     phone_number = data.get("phoneNumber")  # 개인식별자
     bone_lengths = data.get("bone_lengths", {})  # 첫 exercise_date 패킷 연결에서 계산한 뼈 길이
-
-    # 현재 전달받은 landmark의 가속도 측정
-    accerlation = calculate_acceleration(landmarks)
-
-    if accerlation is not None:
-        head_acc = accerlation['head_acceleration']
-        pelvis_acc = accerlation['pelvis_acceleration']
-
-        model_input = np.array(head_acc + pelvis_acc).reshape(1, 6)
-
-        # 입력 데이터로 받은걸로 예측
-        prediction = fall_model.predict(model_input)
-        fall = bool(prediction[0] > 0.5)
-
-        if fall:
-            print("##########  낙상 감지 ##########")
 
     # ✅ 사용자 체형 + 신체 길이 조회
     body_info = get_body_info_for_dumbbell_shoulder_press(phone_number)

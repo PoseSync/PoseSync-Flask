@@ -1,25 +1,12 @@
 import numpy as np
 from app.util.pose_landmark_enum import PoseLandmark
 import copy
-from collections import deque
-import time
-
-# AI 모델 가져오기
-from app.ai.ai_model import fall_model
-
-# 가속도 계산
-from app.util.calculate_landmark_accerlation import calculate_acceleration
 
 start_hip_y = None  # 스쿼트 시작 시 고관절 높이 저장
 is_descending = True  # 현재 내려가는 상태인지 여부 (True면 내려가는 중)
 hip_to_knee_length = None  # 고관절-무릎 길이 저장
 knee_to_ankle_length = None  # 무릎-발목 길이 저장
 squat_count = 0  # 스쿼트 횟수
-
-# 시퀀스 버퍼 (60프레임)
-accel_seq_buffer = deque(maxlen=30)
-
-fall_detected = False
 
 def process_squat(data):
     # 클라이언트로부터 landmarks 데이터를 받음.
@@ -36,27 +23,6 @@ def process_squat(data):
     
     # 원본을 절대 수정하지 않게 깊은 복사(deep copy) 사용
     landmarks = copy.deepcopy(landmarks) 
-
-# 1. 가속도 계산 및 시퀀스 버퍼에 누적
-    acceleration = calculate_acceleration(landmarks)
-    if acceleration:
-        # head와 pelvis의 평균 가속도를 [x, y, z]
-        vec = acceleration["head_acceleration"] + acceleration["pelvis_acceleration"]
-        accel_seq_buffer.append(vec)
-
-        print(f"[{time.time()}] ✅ accel 추가됨, 현재 길이: {len(accel_seq_buffer)}")
-
-        # 버퍼가 60개 이상일 때 매 프레임마다 예측 수행
-        if len(accel_seq_buffer) >= 30:
-            model_input = np.array(list(accel_seq_buffer)[-30:]).reshape(1, 30, 6)
-            prediction = fall_model.predict(model_input, verbose=0)
-            fall = bool(prediction[0][0] > 0.5)
-            print(f"예측값: {prediction[0][0]}")
-            if fall and not fall_detected:
-                print("##########  낙상 감지 ##########")
-                fall_detected = True
-            elif not fall:
-                fall_detected = False  # 감지가 끝나면 다시 초기화
 
     if start_hip_y is None:
         start_hip_y = landmarks[PoseLandmark.LEFT_HIP]['y']
