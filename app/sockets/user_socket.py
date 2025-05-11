@@ -168,6 +168,7 @@ def register_user_socket(socketio):
             # 클라이언트에서 받은 원본 랜드마크 데이터
             landmarks = data.get('landmarks', [])
 
+            fall = False
 
             print(f'클라이언트에서 받자마자 => {landmarks}')
 
@@ -184,7 +185,8 @@ def register_user_socket(socketio):
                 if len(accel_seq_buffer) >= 30:
                     model_input = np.array(list(accel_seq_buffer)[-30:]).reshape(1, 30, 6)
                     prediction = fall_model.predict(model_input, verbose=0)
-                    fall = bool(prediction[0][0] > 0.5)
+                    # 임계값 0.8로 수정해서 낙상 감지 기준을 더 빡빡하게
+                    fall = bool(prediction[0][0] > 0.8)
                     print(f"예측값: {prediction[0][0]}")
                     if fall and not fall_detected:
                         print("##########  낙상 감지 ##########")
