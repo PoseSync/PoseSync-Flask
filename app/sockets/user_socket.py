@@ -20,6 +20,9 @@ from app.ai.ai_model import fall_model
 # 가속도 계산
 from app.util.calculate_landmark_accerlation import calculate_acceleration
 
+# 전화 걸기
+from app.util.call import call_user
+
 socketio = SocketIO(cors_allowed_origins="*")
 # 각 클라이언트 세션 저장하는 딕셔너리
 clients = {}
@@ -191,6 +194,8 @@ def register_user_socket(socketio):
                     if fall and not fall_detected:
                         print("##########  낙상 감지 ##########")
                         fall_detected = True
+                        # 전화 걸기
+                        call_user()
 
 
             # id → name 필드 보강
