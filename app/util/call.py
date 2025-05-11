@@ -6,7 +6,7 @@ auth_token = '957b48200da6aa7be0ae674051a4a2d7'
 twilio_number = '+12694212923'  # 너가 구매한 번호
 
 # 추후 수정
-voice_url = 'http://<EC2-IP>/voice.xml'  # AWS에서 실행 중인 XML 주소
+voice_url = 'http://3.37.36.81:5002/voice.xml'  # AWS에서 실행 중인 XML 주소
 
 client = Client(account_sid, auth_token)
 
