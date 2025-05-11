@@ -91,10 +91,10 @@ def register_user_socket(socketio):
         print('클라이언트 연결 끊음')
         phone_number = data.get('phoneNumber')
         disconnected_sid = request.sid
-        is_first = True
         for phone_number, sid in list(clients.items()):
             if sid == disconnected_sid:
                 del clients[phone_number]
+                reset_globals()
                 print(f'phone_number {phone_number} 연결 해제 처리 완료')
                 break
         
@@ -122,6 +122,8 @@ def register_user_socket(socketio):
                       )
         if removed:
             disconnect(sid=removed)
+            # 전역변수 초기화
+            reset_globals()
             print(f'🧹 연결 해제됨: {phone_number}')
         else:
             print(f'⚠️ 연결 정보 없음: {phone_number}')
@@ -152,13 +154,15 @@ def register_user_socket(socketio):
 
             # 소켓 연결 끊음.
             disconnect(sid=removed)
+            # 전역변수 초기화
+            reset_globals()
             print(f'🧹 연결 해제됨: {phone_number}')
         else:
             print(f'⚠️ 연결 정보 없음: {phone_number}')
 
     @socketio.on('exercise_data')
     def handle_exercise_data(data):
-        global is_first, distances
+        global is_first, distances, fall_detected
         start_time = time.perf_counter()
         try:
             # 클라이언트에서 받은 원본 랜드마크 데이터
@@ -185,8 +189,6 @@ def register_user_socket(socketio):
                     if fall and not fall_detected:
                         print("##########  낙상 감지 ##########")
                         fall_detected = True
-                    elif not fall:
-                        fall_detected = False  # 감지가 끝나면 다시 초기화
 
 
             # id → name 필드 보강
@@ -317,3 +319,21 @@ def apply_test_offset_joints(result):
                 offset_x, offset_y = key_joints[idx]
                 landmark['x'] += offset_x
                 landmark['y'] += offset_y
+
+# 전역변수 초기화 함수
+def reset_globals():
+    global accel_seq_buffer, fall_detected, is_first, distances
+
+    # 시퀀스 버퍼 초기화
+    accel_seq_buffer.clear()
+
+    # 낙상 감지 플래그 초기화
+    fall_detected = False
+
+    # 첫 프레임 여부 초기화
+    is_first = True
+
+    # 뼈 길이 초기화
+    distances = {}
+
+    print("🌀 전역 상태가 초기화되었습니다.")
