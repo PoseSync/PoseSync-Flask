@@ -10,9 +10,24 @@ from app.util.pose_landmark_enum import PoseLandmark   # id→공식명 enum
 import time
 from app.util.pose_transform import process_pose_landmarks, reverse_pose_landmarks
 
+from collections import deque
+import time
+import numpy as np
+
+# AI 모델 가져오기
+from app.ai.ai_model import fall_model
+
+# 가속도 계산
+from app.util.calculate_landmark_accerlation import calculate_acceleration
+
 socketio = SocketIO(cors_allowed_origins="*")
 # 각 클라이언트 세션 저장하는 딕셔너리
 clients = {}
+
+# 시퀀스 버퍼 (60프레임)
+accel_seq_buffer = deque(maxlen=30)
+
+fall_detected = False
 
 # 테스트 모드 전역 변수
 TEST_OFFSET_ENABLED = False  # 테스트 모드 활성화
@@ -76,10 +91,10 @@ def register_user_socket(socketio):
         print('클라이언트 연결 끊음')
         phone_number = data.get('phoneNumber')
         disconnected_sid = request.sid
-        is_first = True
         for phone_number, sid in list(clients.items()):
             if sid == disconnected_sid:
                 del clients[phone_number]
+                reset_globals()
                 print(f'phone_number {phone_number} 연결 해제 처리 완료')
                 break
         
@@ -107,6 +122,8 @@ def register_user_socket(socketio):
                       )
         if removed:
             disconnect(sid=removed)
+            # 전역변수 초기화
+            reset_globals()
             print(f'🧹 연결 해제됨: {phone_number}')
         else:
             print(f'⚠️ 연결 정보 없음: {phone_number}')
@@ -137,13 +154,15 @@ def register_user_socket(socketio):
 
             # 소켓 연결 끊음.
             disconnect(sid=removed)
+            # 전역변수 초기화
+            reset_globals()
             print(f'🧹 연결 해제됨: {phone_number}')
         else:
             print(f'⚠️ 연결 정보 없음: {phone_number}')
 
     @socketio.on('exercise_data')
     def handle_exercise_data(data):
-        global is_first, distances
+        global is_first, distances, fall_detected
         start_time = time.perf_counter()
         try:
             # 클라이언트에서 받은 원본 랜드마크 데이터
@@ -151,6 +170,25 @@ def register_user_socket(socketio):
 
 
             print(f'클라이언트에서 받자마자 => {landmarks}')
+
+            # 1. 가속도 계산 및 시퀀스 버퍼에 누적
+            acceleration = calculate_acceleration(landmarks)
+            if acceleration:
+                # head와 pelvis의 평균 가속도를 [x, y, z]
+                vec = acceleration["head_acceleration"] + acceleration["pelvis_acceleration"]
+                accel_seq_buffer.append(vec)
+
+                print(f"[{time.time()}] ✅ accel 추가됨, 현재 길이: {len(accel_seq_buffer)}")
+
+                # 버퍼가 60개 이상일 때 매 프레임마다 예측 수행
+                if len(accel_seq_buffer) >= 30:
+                    model_input = np.array(list(accel_seq_buffer)[-30:]).reshape(1, 30, 6)
+                    prediction = fall_model.predict(model_input, verbose=0)
+                    fall = bool(prediction[0][0] > 0.5)
+                    print(f"예측값: {prediction[0][0]}")
+                    if fall and not fall_detected:
+                        print("##########  낙상 감지 ##########")
+                        fall_detected = True
 
 
             # id → name 필드 보강
@@ -213,6 +251,9 @@ def register_user_socket(socketio):
 
             # 중요: requestId를 결과에 포함
             result['requestId'] = request_id
+
+            # 낙상여부를 반환 데이터에 추가, true/false 값
+            result['is_fall'] = fall
 
             # 클라이언트에서 사용하지 않는 데이터 바로 삭제
             del result['landmarks']  # 원본 변환 랜드마크 제거 (네트워크 부하 감소)
@@ -278,3 +319,21 @@ def apply_test_offset_joints(result):
                 offset_x, offset_y = key_joints[idx]
                 landmark['x'] += offset_x
                 landmark['y'] += offset_y
+
+# 전역변수 초기화 함수
+def reset_globals():
+    global accel_seq_buffer, fall_detected, is_first, distances
+
+    # 시퀀스 버퍼 초기화
+    accel_seq_buffer.clear()
+
+    # 낙상 감지 플래그 초기화
+    fall_detected = False
+
+    # 첫 프레임 여부 초기화
+    is_first = True
+
+    # 뼈 길이 초기화
+    distances = {}
+
+    print("🌀 전역 상태가 초기화되었습니다.")
