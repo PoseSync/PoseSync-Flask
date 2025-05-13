@@ -8,6 +8,7 @@ from app.models.user import User
 from app.models.body_type import BodyType
 from app.models.body_data import BodyData
 from app.controllers.user_controller import save_body_data, body_data_bp
+from app.services.user_info_service import save_phone_number_and_height
 
 
 app = Flask(__name__)
@@ -38,6 +39,39 @@ register_user_socket(socketio)
 @app.route('/')
 def home():
     return 'Flask + SQLAlchemy + MySQL + WebSocket 실행 중!'
+
+# 전화번호와 키로 User 생성하는 API
+@app.route('/create_user', methods=['POST'])
+def save_user():
+    try:
+        data = request.get_json()
+        phone_number = data.get('phoneNumber')
+        height = data.get('height')
+
+        # 필수 값 검증
+        if phone_number is None or height is None:
+            return jsonify({"error": "phoneNumber and height are required"}), 400
+
+        user = save_phone_number_and_height(data=data)
+
+        if user:
+            return jsonify({
+                "message": "User 저장 완료",
+                "user_id": user.user_id,
+                "phone_number": user.phone_number,
+                "height": str(user.height)
+            }), 201
+        else:
+            return jsonify({
+                "message": "이미 존재하는 사용자입니다."
+            }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+        
+        
 
 
 
