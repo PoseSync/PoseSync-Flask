@@ -1,6 +1,7 @@
 import numpy as np
 
 from app.services.body_service.body_spec_service import get_body_info_for_dumbbell_shoulder_press
+from app.util.landmark_stabilizer import landmark_stabilizer
 from app.util.math_util import normalize_vector
 from app.util.pose_landmark_enum import PoseLandmark
 from app.util.shoulderPress_util import calculate_elbow_position_by_forward_angle, \
@@ -12,16 +13,14 @@ def process_dumbbell_shoulderPress(data):
     phone_number = data.get("phoneNumber")  # 개인식별자
     bone_lengths = data.get("bone_lengths", {})  # 첫 exercise_date 패킷 연결에서 계산한 뼈 길이
 
+    landmarks = landmark_stabilizer.stabilize_landmarks(landmarks, dead_zone=0.03)
+
+    # 안정화는 소켓 레벨에서 이미 적용되었으므로 여기서는 제거
+    # 소켓에서 이미 안정화된 랜드마크를 전달받아 사용
+
     # ✅ 사용자 체형 + 신체 길이 조회
     body_info = get_body_info_for_dumbbell_shoulder_press(phone_number)
     arm_type = body_info["arm_type"]
-    upper_arm_length = bone_lengths["left_upper_arm_length"]
-    forearm_length = bone_lengths["left_forearm_length"]
-    shoulder_width = bone_lengths["shoulder_width"]
-    # db조회해서 뼈길이 가져오기
-    # upper_arm_length = body_info["upper_arm_length"]
-    # forearm_length = body_info["forearm_length"]
-    # shoulder_width = body_info["shoulder_width"]
 
     # 어깨좌표 [0] : 왼쪽 [1] : 오른쪽
     shoulders_coord = [
@@ -71,16 +70,24 @@ def process_dumbbell_shoulderPress(data):
         shoulder = shoulders_coord[side]
         elbow_y = elbows_coord[side]['y']  # 현재 팔꿈치 높이 유지
 
+        # 각 팔에 맞는 길이 사용 (side_label 활용)
+        current_upper_arm_length = bone_lengths[f"{side_label}_upper_arm_length"]
+        current_forearm_length = bone_lengths[f"{side_label}_forearm_length"]
+
         # 🟥 팔꿈치 위치 계산 (전방 외각 유지)
         elbow_pos = calculate_elbow_position_by_forward_angle(
             shoulder_coord=[shoulder['x'], shoulder['y'], shoulder['z']],
             arm_type=arm_type,
-            upper_arm_length=upper_arm_length,
-            elbow_y=elbow_y
+            upper_arm_length=current_upper_arm_length,
+            elbow_y=elbow_y,
+            side=side_label  # side_label을 그대로 전달
         )
 
         # ⬇ landmarks에 elbow 좌표 업데이트
-        elbow_id = PoseLandmark.LEFT_ELBOW if side == 0 else PoseLandmark.RIGHT_ELBOW
+        if side_label == "left":
+            elbow_id = PoseLandmark.LEFT_ELBOW
+        else:  # side_label == "right"
+            elbow_id = PoseLandmark.RIGHT_ELBOW
 
         # 원래 visibility 값 저장
         elbow_visibility = landmarks[elbow_id].get('visibility', 1.0)
@@ -92,7 +99,7 @@ def process_dumbbell_shoulderPress(data):
         # visibility 값 복원
         landmarks[elbow_id]['visibility'] = elbow_visibility
 
-        # 🟦 손목 위치 계산 (숄더프레스 기준 y+ 방향)
+        # 2. 손목 위치 계산 (숄더프레스 기준 y+ 방향)
         wrist_pos = adjust_wrist_direction_to_preserve_min_angle(
             shoulder_coord=[
                 shoulders_coord[side]['x'],
@@ -100,12 +107,16 @@ def process_dumbbell_shoulderPress(data):
                 shoulders_coord[side]['z']
             ],
             elbow_coord=elbow_pos,
-            forearm_length=forearm_length,
-            arm_type=arm_type
+            forearm_length=current_forearm_length,
+            arm_type=arm_type,
+            side=side_label  # side_label을 그대로 전달
         )
 
         # ⬇ landmarks에 wrist 좌표 업데이트
-        wrist_id = PoseLandmark.LEFT_WRIST if side == 0 else PoseLandmark.RIGHT_WRIST
+        if side_label == "left":
+            wrist_id = PoseLandmark.LEFT_WRIST
+        else:  # side_label == "right"
+            wrist_id = PoseLandmark.RIGHT_WRIST
 
         # 원래 visibility 값 저장
         wrist_visibility = landmarks[wrist_id].get('visibility', 1.0)
@@ -117,21 +128,24 @@ def process_dumbbell_shoulderPress(data):
         # visibility 값 복원
         landmarks[wrist_id]['visibility'] = wrist_visibility
 
+    # 수정된 landmarks를 data에 다시 저장
+    data["landmarks"] = landmarks
+
     return data  # 수정된 data
 
 
 """
 {
-  "phoneNumber": "01012345678",
-  "exerciseType": "dumbbell_shoulder_press",
-  "timestamp": "2025-04-15T13:28:56.928217",
-  "landmarks": [
-    { "x": 0.1, "y": 0.5, "z": 0.1 },  // LEFT_SHOULDER
-    { "x": 0.3, "y": 0.5, "z": 0.1 },  // RIGHT_SHOULDER
-    { "x": 0.1, "y": 0.3, "z": 0.1 },  // LEFT_ELBOW (updated)
-    { "x": 0.3, "y": 0.3, "z": 0.1 },  // RIGHT_ELBOW (updated)
-    { "x": 0.1, "y": 0.3, "z": 0.25 }, // LEFT_WRIST (updated, right-angle direction)
-    { "x": 0.3, "y": 0.3, "z": 0.25 }  // RIGHT_WRIST (updated, right-angle direction)
-  ]
+ "phoneNumber": "01012345678",
+ "exerciseType": "dumbbell_shoulder_press",
+ "timestamp": "2025-04-15T13:28:56.928217",
+ "landmarks": [
+   { "x": 0.1, "y": 0.5, "z": 0.1 },  // LEFT_SHOULDER
+   { "x": 0.3, "y": 0.5, "z": 0.1 },  // RIGHT_SHOULDER
+   { "x": 0.1, "y": 0.3, "z": 0.1 },  // LEFT_ELBOW (updated)
+   { "x": 0.3, "y": 0.3, "z": 0.1 },  // RIGHT_ELBOW (updated)
+   { "x": 0.1, "y": 0.3, "z": 0.25 }, // LEFT_WRIST (updated, right-angle direction)
+   { "x": 0.3, "y": 0.3, "z": 0.25 }  // RIGHT_WRIST (updated, right-angle direction)
+ ]
 }
 """
