@@ -1,7 +1,6 @@
 from app.models import db
 from app.models.user import User
 from app.models.body_data import BodyData
-from app.models.record import Record
 
 # 운동 기록 저장
 def save_record(exercise_result):
