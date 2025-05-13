@@ -8,7 +8,7 @@ from app.models.user import User
 from app.models.body_type import BodyType
 from app.models.body_data import BodyData
 from app.controllers.user_controller import save_body_data, body_data_bp
-from app.services.user_info_service import save_phone_number_and_height
+from app.services.user_info_service import save_phone_number_and_height, save_exercise_set_service
 
 
 app = Flask(__name__)
@@ -64,14 +64,53 @@ def save_user():
         else:
             return jsonify({
                 "message": "이미 존재하는 사용자입니다."
-            }), 200
+            }), 400
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": str(e)}), 400   
 
 
-        
-        
+@app.route('/save_exercise_set', methods=['POST'])
+def save_exercise_set():
+    data_list = request.get_json()
+
+    if not isinstance(data_list, list):
+        return jsonify({"error": "JSON body must be a list of exercise sets"}), 400
+
+    results = []
+
+    for item in data_list:
+        phone_number = item.get('phone_number')
+        # exerciseType 명시
+        exercise_name = item.get('exerciseType')
+        exercise_weight = item.get('exercise_weight')
+        exercise_cnt = item.get('exercise_cnt')
+
+        if phone_number is None or exercise_name is None or exercise_weight is None or exercise_cnt is None:
+            results.append({
+                "phone_number": phone_number,
+                "status": "error",
+                "message": "Missing required data"
+            })
+            continue
+
+        try:
+            saved_set = save_exercise_set_service(item)  # 서비스 함수로 분리되어야 함
+            results.append({
+                "phone_number": phone_number,
+                "status": "success",
+                "exercise_set_id": saved_set.id
+            })
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            results.append({
+                "phone_number": phone_number,
+                "status": "error",
+                "message": str(e)  # ✅ 이게 되어 있어야 함
+            })
+
+    return jsonify(results), 201
 
 
 
