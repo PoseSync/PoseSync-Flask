@@ -6,3 +6,4 @@ db = SQLAlchemy()
 from .user import User
 from .body_type import BodyType
 from .body_data import BodyData
+from .exercise_set import ExerciseSet
