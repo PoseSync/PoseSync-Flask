@@ -44,9 +44,6 @@ record_list = []
 # 현재 클라이언트로 전달받은 데이터가 맨 처음 데이터인지 확인 => 이는 초기 유저 landmark의 점과 점 사이의 거리를 구하기 위함
 is_first = True
 
-# 현재 운동횟수를 저장한다 (처음엔 0으로 초기화 -> disconnect_clinet할 때 )
-current_count = 0
-
 # 유저의 각 landmark 사이의 거리
 distances = {}
 
@@ -159,7 +156,7 @@ def register_user_socket(socketio):
     # 클라이언트 수동 연결 해제 요청 처리, 1세트 운동 성공적으로 끝났다는 의미이므로 DB에 Record 데이터 저장
     @socketio.on('disconnect_client')
     def handle_disconnect_client(data):
-        global is_first, distances, current_count   # 뼈 길이 배열, 현재 개수
+        global is_first, distances   # 뼈 길이 배열
         phone_number = data.get('phoneNumber')
 
         removed = clients.pop(phone_number, None)
@@ -180,7 +177,7 @@ def register_user_socket(socketio):
 
     @socketio.on('exercise_data')
     def handle_exercise_data(data):
-        global is_first, distances, fall_detected, current_count
+        global is_first, distances, fall_detected
         start_time = time.perf_counter()
         try:
             # 클라이언트에서 받은 원본 랜드마크 데이터
@@ -317,8 +314,6 @@ def reset_globals():
     # 뼈 길이 초기화
     distances = {}
     print('❌❌❌뼈 길이 데이터 빈 배열로 초기화 완료❌❌❌')
-
-    current_count = 0
 
 
     print("🌀 전역 상태가 초기화되었습니다.")
