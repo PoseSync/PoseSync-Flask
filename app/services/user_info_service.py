@@ -5,6 +5,27 @@ from app.services.squatService.squatService import squat_count
 from app.models.exercise_result import ExerciseResult
 from app.models.user import User
 
+
+# User의 전화번호, 키 저장
+def save_phone_number_and_height(data):
+    height = data.get('height')
+    phone_number = data.get('phoneNumber')
+
+    # 이미 해당 데이터가 존재하는지 확인, 전화번호만 사용해서
+    # first() => 조건을 만족하는 첫번째 record get
+    user = User.query.filter_by(phone_number=phone_number).first()
+
+    # 이미 해당 phone_number를 갖고 있는 User record가 있다면 무시
+    if user:
+        return
+    
+    # User 객체 저장 후 return
+    new_user = User(phone_number=phone_number, height=height)
+    db.session.add(new_user)
+    db.session.commit()
+
+    return new_user
+
 # 운동이 중간에 종료됐을 때 record 저장
 def save_record_failed_service(record):
     phone_number = record.phone_number
