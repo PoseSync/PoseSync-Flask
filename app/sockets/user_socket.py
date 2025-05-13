@@ -162,41 +162,10 @@ def register_user_socket(socketio):
         global is_first, distances, current_count   # 뼈 길이 배열, 현재 개수
         phone_number = data.get('phoneNumber')
 
-        # # 데이터 유효성 검사 및 기본값 설정
-        # exercise_name = data.get('exercise_name', '기본 운동')
-        # exercise_weight = data.get('exercise_weight', 10)
-        # exercise_cnt = data.get('exercise_cnt', 1)
-        #
         removed = clients.pop(phone_number, None)
-        #
-        # # record_list가 비어있지 않은지 확인
-        # if record_list and len(record_list) > 0:
-        #     # 필드 업데이트
-        #     record = record_list[0]
-        #     record.exercise_name = exercise_name
-        #     record.exercise_weight = exercise_weight
-        #     record.exercise_cnt = exercise_cnt
-        #
-        # # 1세트 운동 했을 때 성공적으로 저장
-        # save_record_success_controller(record_list[0])
-        # # 원래 했던 운동 record_list에서 삭제
-        # del record_list[0]
-
-
-
-        # 다음 운동 정보 전송, record_list가 비어있지 않은 경우에만 전송
-        # if record_list:
-        #     socketio.emit('next', {
-        #         "exercise_name": record_list[0].exerciseType,
-        #         "exercise_cnt": record_list[0].exercise_cnt,
-        #         "exercise_weight": record_list[0].exercise_weight
-        #     }, to=removed)
-
 
          # 다음 세트 시작 시 다시 각 landmark 사이의 거리를 구하기 위해서 is_first 값 변경
         is_first = True
-
-
 
         # 소켓 연결 끊음.
         disconnect(sid=removed)
@@ -331,49 +300,6 @@ def register_user_socket(socketio):
             traceback.print_exc()
             emit('result', {'error': '서버 내부 오류가 발생했습니다.'})
 
-
-# 테스트 메서드
-##########################################################################################################
-
-# 1. 기본 오프셋 테스트
-def apply_test_offset_basic(result):
-    """모든 랜드마크에 일정한 오프셋 적용"""
-    if 'landmarks' in result:
-        for landmark in result['landmarks']:
-            landmark['x'] += 0.2  # 오른쪽으로 이동
-            landmark['y'] += 0.1  # 아래로 이동
-
-
-# 2. 파동 패턴 테스트
-def apply_test_offset_wave(result):
-    """파동 패턴으로 랜드마크 이동 (더 확실한 시각적 차이)"""
-    if 'landmarks' in result:
-        for idx, landmark in enumerate(result['landmarks']):
-            # 사인파 패턴으로 x, y 오프셋
-            offset_x = 0.15 * math.sin(idx * 0.5)
-            offset_y = 0.1 * math.cos(idx * 0.5)
-            landmark['x'] += offset_x
-            landmark['y'] += offset_y
-
-
-# 3. 특정 관절 확대 테스트
-def apply_test_offset_joints(result):
-    """주요 관절만 크게 이동"""
-    if 'landmarks' in result:
-        key_joints = {
-            11: (0.3, 0.0),  # 왼쪽 어깨
-            12: (-0.3, 0.0),  # 오른쪽 어깨
-            13: (0.4, 0.2),  # 왼쪽 팔꿈치
-            14: (-0.4, 0.2),  # 오른쪽 팔꿈치
-            15: (0.5, 0.3),  # 왼쪽 손목
-            16: (-0.5, 0.3),  # 오른쪽 손목
-        }
-
-        for idx, landmark in enumerate(result['landmarks']):
-            if idx in key_joints:
-                offset_x, offset_y = key_joints[idx]
-                landmark['x'] += offset_x
-                landmark['y'] += offset_y
 
 # 전역변수 초기화 함수
 def reset_globals():
