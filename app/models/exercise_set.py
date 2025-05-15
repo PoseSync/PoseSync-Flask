@@ -29,5 +29,8 @@ class ExerciseSet(db.Model):
     # 운동 성공 여부, 기본값 False
     is_success = db.Column(db.Boolean, nullable=False, default=False)
 
+    # 운동 루틴 구분하기 위한 정수값
+    routine_group = db.Column(db.Integer, nullable=True)
+
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
