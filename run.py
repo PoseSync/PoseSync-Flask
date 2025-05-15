@@ -8,7 +8,7 @@ from app.models.user import User
 from app.models.body_type import BodyType
 from app.models.body_data import BodyData
 from app.controllers.user_controller import save_body_data, body_data_bp
-from app.services.user_info_service import save_phone_number_and_height, save_exercise_set_service
+from app.services.user_info_service import save_phone_number_and_height, save_exercise_set_service, get_exercise_set_service
 from app.models.exercise_set import ExerciseSet
 
 
@@ -126,6 +126,20 @@ def save_exercise_set():
             })
     db.session.commit()
     return jsonify(results), 201
+
+@app.route('/get_exercise_set', methods=['GET'])
+def get_exercise_set():
+    phone_number = request.args.get('phone_number')
+
+    if not phone_number:
+        return jsonify({"error": "Missing phone_number"}), 400
+
+    try:
+        result = get_exercise_set_service(phone_number)
+        return jsonify(result), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
+
 
 if __name__ == '__main__':
     socketio.run(app, host='127.0.0.1', port=5001, debug=True, allow_unsafe_werkzeug=True)

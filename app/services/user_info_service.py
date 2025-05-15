@@ -6,6 +6,40 @@ from app.models.user import User
 from app.models.exercise_set import ExerciseSet
 
 
+def get_exercise_set_service(phone_number):
+    user = User.query.filter_by(phone_number=phone_number).first()
+    if not user:
+        raise ValueError("User not found")
+
+    # 가장 큰 routine_group 값 조회
+    last_group = db.session.query(db.func.max(ExerciseSet.routine_group))\
+        .filter_by(user_id=user.user_id).scalar()
+
+    if last_group is None:
+        raise ValueError("No exercise sets found")
+
+    sets = ExerciseSet.query.filter_by(user_id=user.user_id, routine_group=last_group).all()
+
+    return {
+        "phone_number": phone_number,
+        "routine_group": last_group,
+        "sets": [
+            {
+                "id": s.id,
+                "exercise_type": s.exercise_type,
+                "exercise_weight": s.exercise_weight,
+                "target_count": s.target_count,
+                "current_count": s.current_count,
+                "is_finished": s.is_finished,
+                "is_success": s.is_success,
+                "routine_group": s.routine_group,
+                "created_at": s.created_at.isoformat(),
+            }
+            for s in sets
+        ]
+    }
+
+
 # ExerciseSet 엔티티를 받아 UPDATE 한 후 저장하는 함수
 def save_updated_exercise_set(exercise_set:ExerciseSet):
     updated_exercise_set = ExerciseSet.query.filter_by(id = exercise_set.id).first()
