@@ -8,7 +8,8 @@ from app.models.user import User
 from app.models.body_type import BodyType
 from app.models.body_data import BodyData
 from app.controllers.user_controller import save_body_data, body_data_bp
-from app.services.user_info_service import save_phone_number_and_height, save_exercise_set_service
+from app.services.user_info_service import save_phone_number_and_height, save_exercise_set_service, get_exercise_set_service
+from app.models.exercise_set import ExerciseSet
 
 
 app = Flask(__name__)
@@ -79,6 +80,20 @@ def save_exercise_set():
 
     results = []
 
+    phone_number = data_list[0].get('phone_number')
+    if not phone_number:
+        return jsonify({"error": "Missing phone_number"}), 400
+
+    # 유저 가져오기
+    user = User.query.filter_by(phone_number=phone_number).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # 🔸 routine_group을 한 번만 계산
+    last_group = db.session.query(db.func.max(ExerciseSet.routine_group))\
+        .filter_by(user_id=user.user_id).scalar()
+    next_group = (last_group or 0) + 1
+
     for item in data_list:
         phone_number = item.get('phone_number')
         # exerciseType 명시
@@ -95,7 +110,7 @@ def save_exercise_set():
             continue
 
         try:
-            saved_set = save_exercise_set_service(item)  # 서비스 함수로 분리되어야 함
+            saved_set = save_exercise_set_service(item, user, next_group)  # 서비스 함수로 분리되어야 함
             results.append({
                 "phone_number": phone_number,
                 "status": "success",
@@ -109,9 +124,21 @@ def save_exercise_set():
                 "status": "error",
                 "message": str(e)  # ✅ 이게 되어 있어야 함
             })
-
+    db.session.commit()
     return jsonify(results), 201
 
+@app.route('/get_exercise_set', methods=['GET'])
+def get_exercise_set():
+    phone_number = request.args.get('phone_number')
+
+    if not phone_number:
+        return jsonify({"error": "Missing phone_number"}), 400
+
+    try:
+        result = get_exercise_set_service(phone_number)
+        return jsonify(result), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
 
 
 if __name__ == '__main__':
