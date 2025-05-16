@@ -6,6 +6,7 @@ from app.controllers.user_controller import handle_data_controller, save_record_
 from app.models.record import Record
 from app.util.calculate_landmark_distance import connections, calculate_named_linked_distances, \
     map_distances_to_named_keys, bone_name_map
+from app.util.landmark_stabilizer import landmark_stabilizer
 from app.util.pose_landmark_enum import PoseLandmark   # id→공식명 enum
 import time
 from app.util.pose_transform import process_pose_landmarks, reverse_pose_landmarks
@@ -184,13 +185,12 @@ def register_user_socket(socketio):
             landmarks = data.get('landmarks', [])
 
             # # 1. 랜드마크 안정화 적용 (프레임 내 떨림 감소)
-            try:
-                from app.util.landmark_stabilizer import landmark_stabilizer
-                landmarks = landmark_stabilizer.stabilize_landmarks(landmarks, dead_zone=0.03)
-                data['landmarks'] = landmarks  # 안정화된 랜드마크로 업데이트
-            except Exception as e:
-                print(f"랜드마크 안정화 중 오류 발생: {e}")
-                # 오류 발생 시 원본 landmarks 사용
+            # try:
+            #     landmarks = landmark_stabilizer.stabilize_landmarks(landmarks, dead_zone=0.05)
+            #     data['landmarks'] = landmarks  # 안정화된 랜드마크로 업데이트
+            # except Exception as e:
+            #     print(f"랜드마크 안정화 중 오류 발생: {e}")
+            #     # 오류 발생 시 원본 landmarks 사용
 
             fall = False
 
@@ -219,6 +219,7 @@ def register_user_socket(socketio):
                         call_user()
 
 
+
             # --------------------------------------------------------------------------------------
 
             # 사람 중심 좌표계로 변환 및 정규화
@@ -228,18 +229,18 @@ def register_user_socket(socketio):
             data['landmarks'] = transformed_landmarks
             data['__transformData'] = transform_data
 
-            # id → name 필드 보강
+           # id → name 필드 보강
             for lm in data['landmarks']:
                 lm['name'] = PoseLandmark(lm['id']).name
 
             # 2. 첫프레임 or 뼈 길이 없는경우 ->  뼈 길이 계산 및 이동 평균 적용 (프레임 간 변동 감소)
             # 사용자 기준으로 변환된 좌표를 사용해서 구함 (가이드라인 생성 로직에서 사용하는 좌표계)
-            # if not distances:
-            current_distances = calculate_named_linked_distances(data['landmarks'], connections)
-            current_distances = map_distances_to_named_keys(current_distances, bone_name_map)
-            distances = current_distances
-            print('🦴🦴🦴🦴🦴뼈 길이 측정 완료')
-            print(f"뼈 길이 : {distances}")
+            if not distances:
+                current_distances = calculate_named_linked_distances(data['landmarks'], connections)
+                current_distances = map_distances_to_named_keys(current_distances, bone_name_map)
+                distances = current_distances
+                print('🦴🦴🦴🦴🦴뼈 길이 측정 완료')
+                print(f"뼈 길이 : {distances}")
 
             # 서버 내부에서 사용할 수 있도록 뼈 길이 데이터 추가
             data["bone_lengths"] = distances
