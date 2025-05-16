@@ -5,6 +5,8 @@ from app.models import db  # models/__init__.py에서 정의한 db
 import config
 from sqlalchemy import inspect
 from app.controllers.user_controller import save_body_data, body_data_bp
+from app.services.user_info_service import save_phone_number_and_height, save_exercise_set_service, get_exercise_set_service
+from app.models.exercise_set import ExerciseSet
 
 
 app = Flask(__name__)
@@ -36,6 +38,104 @@ register_user_socket(socketio)
 def home():
     return 'Flask + SQLAlchemy + MySQL + WebSocket 실행 중!'
 
+# 전화번호와 키로 User 생성하는 API
+@app.route('/create_user', methods=['POST'])
+def save_user():
+    try:
+        data = request.get_json()
+        phone_number = data.get('phoneNumber')
+        height = data.get('height')
+
+        # 필수 값 검증
+        if phone_number is None or height is None:
+            return jsonify({"error": "phoneNumber and height are required"}), 400
+
+        user = save_phone_number_and_height(data=data)
+
+        if user:
+            return jsonify({
+                "message": "User 저장 완료",
+                "user_id": user.user_id,
+                "phone_number": user.phone_number,
+                "height": str(user.height)
+            }), 201
+        else:
+            return jsonify({
+                "message": "이미 존재하는 사용자입니다."
+            }), 400
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400   
+
+
+@app.route('/save_exercise_set', methods=['POST'])
+def save_exercise_set():
+    data_list = request.get_json()
+
+    if not isinstance(data_list, list):
+        return jsonify({"error": "JSON body must be a list of exercise sets"}), 400
+
+    results = []
+
+    phone_number = data_list[0].get('phone_number')
+    if not phone_number:
+        return jsonify({"error": "Missing phone_number"}), 400
+
+    # 유저 가져오기
+    user = User.query.filter_by(phone_number=phone_number).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # 🔸 routine_group을 한 번만 계산
+    last_group = db.session.query(db.func.max(ExerciseSet.routine_group))\
+        .filter_by(user_id=user.user_id).scalar()
+    next_group = (last_group or 0) + 1
+
+    for item in data_list:
+        phone_number = item.get('phone_number')
+        # exerciseType 명시
+        exercise_name = item.get('exerciseType')
+        exercise_weight = item.get('exercise_weight')
+        exercise_cnt = item.get('exercise_cnt')
+
+        if phone_number is None or exercise_name is None or exercise_weight is None or exercise_cnt is None:
+            results.append({
+                "phone_number": phone_number,
+                "status": "error",
+                "message": "Missing required data"
+            })
+            continue
+
+        try:
+            saved_set = save_exercise_set_service(item, user, next_group)  # 서비스 함수로 분리되어야 함
+            results.append({
+                "phone_number": phone_number,
+                "status": "success",
+                "exercise_set_id": saved_set.id
+            })
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            results.append({
+                "phone_number": phone_number,
+                "status": "error",
+                "message": str(e)  # ✅ 이게 되어 있어야 함
+            })
+    db.session.commit()
+    return jsonify(results), 201
+
+@app.route('/get_exercise_set', methods=['GET'])
+def get_exercise_set():
+    phone_number = request.args.get('phone_number')
+
+    if not phone_number:
+        return jsonify({"error": "Missing phone_number"}), 400
+
+    try:
+        result = get_exercise_set_service(phone_number)
+        return jsonify(result), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
 
 
 if __name__ == '__main__':

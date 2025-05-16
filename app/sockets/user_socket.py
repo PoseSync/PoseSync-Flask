@@ -2,8 +2,8 @@ import math
 
 from flask_socketio import emit, SocketIO, disconnect
 from flask import request
-from app.controllers.user_controller import handle_data_controller, save_record_success_controller, save_record_failed_controller
-from app.models.record import Record
+from app.controllers.user_controller import handle_data_controller
+from app.services.user_info_service import get_exercise_set, save_updated_exercise_set
 from app.util.calculate_landmark_distance import connections, calculate_named_linked_distances, \
     map_distances_to_named_keys, bone_name_map
 from app.util.landmark_stabilizer import landmark_stabilizer
@@ -60,50 +60,32 @@ LANDMARK_NAMES = [
 
 def register_user_socket(socketio):
 
-    # 소켓 연결 후, 클라이언트로부터 받은 데이터들 Record 객체에 저장
+    # 소켓 연결
     @socketio.on('connection')
     def handle_connect(data):
         phone_number = data.get('phoneNumber')
-        exercise_name = data.get('exercise_name', '기본 운동')  # exerciseType -> exercise_name
-        exercise_weight = data.get('exercise_weight')
-        exercise_cnt = data.get('exercise_cnt')
 
-        record = Record(
-            exercise_cnt=exercise_cnt,
-            exercise_name=exercise_name,
-            exercise_weight=exercise_weight,
-            phone_number=phone_number
-        )
-
-        # 디버그 출력
-        print(f"생성된 Record 정보: {record.exercise_name}, {record.exercise_cnt}, {record.exercise_weight}")
-
-        # 생성된 Record 객체 record_list에 저장
-        record_list.append(record)
         clients[phone_number] = request.sid
         global is_first
         is_first = True  # 첫 서버연결 때 운동 패킷 첫 연결여부 True
         print(f' 클라이언트 연결됨 : {phone_number} -> SID {request.sid}')
 
-#-----------------------------------------------------------------------------------------------------------
 
-    """
-    운동 세트 시작할 때
-    """
+    # 운동 세트 시작할 때
+    # @socketio.on('restart')
+    # def handle_reconnect(data):
+    #     phone_number = data.get('phoneNumber')
+    #     clients[phone_number] = request.sid
 
-    @socketio.on('restart')
-    def handle_reconnect(data):
-        phone_number = data.get('phoneNumber')
-        clients[phone_number] = request.sid
+    #     # 운동 세트 시작할 때 운동 횟수, 이름 보내줌.
+    #     socketio.emit('start', {
+    #         "exercise_name": record_list[0].exercise_name,
+    #         "exercise_weight": record_list[0].exercise_weight
+    #     },
+    #     to=request.sid
+    #     )
+    #     print(f' 클라이언트 연결됨 : {phone_number} -> SID {request.sid}')
 
-        # 운동 세트 시작할 때 운동 횟수, 이름 보내줌.
-        socketio.emit('start', {
-            "exercise_name": record_list[0].exercise_name,  # exerciseType -> exercise_name
-            "exercise_weight": record_list[0].exercise_weight
-        },
-                      to=request.sid
-                      )
-        print(f' 클라이언트 연결됨 : {phone_number} -> SID {request.sid}')
 
     # 소켓 연결 끊음
     # 신경 안 써도 될듯 이 부분.
@@ -118,62 +100,52 @@ def register_user_socket(socketio):
                 reset_globals()
                 print(f'phone_number {phone_number} 연결 해제 처리 완료')
                 break
-    """
-    세트 실패
-    중간에 운동을 끊었을 때, 횟수는 현재 진행중인 service 계층에서의 cnt로 Record 객체를 업데이트하고 저장
-    """
-    # 
-    @socketio.on('exercise_disconnect')
-    def handle_disconnect_exercise(data):
-        phone_number = data.get('phoneNumber')
-        removed = clients.pop(phone_number, None)
-        # 중간에 운동 끊었을 때 지금까지 했던 운동 횟수에 DB에 저장하라고 호출
-        # 2025/04/26 코멘트
-        # 컨트롤러 함수에 넘겨주는 매개변수 record에서 사용자 이름, 운동 이름을 가져오고 운동횟수는 Service 계층에서 세고 있으니
-        # Service 계층에서 cnt 변수 가져와서 DB에 저장하면 될듯.
-        # ----------------------------------------------------
-        save_record_failed_controller(record_list[0])
-        # 운동 중이던 세트 삭제
-        del record_list[0]
-        # 다음 운동 정보 전송
-        socketio.emit('next',
-                      {
-                          "exerciseType": record_list[0].exerciseType,
-                          "exercise_cnt": record_list[0].exercise_cnt,
-                          "exercise_weight": record_list[0].exercise_weight
-                      },
-                      to=removed
-                      )
-        if removed:
-            disconnect(sid=removed)
-            # 전역변수 초기화
-            reset_globals()
-            print(f'🧹 연결 해제됨: {phone_number}')
-        else:
-            print(f'⚠️ 연결 정보 없음: {phone_number}')
+
 
 # -----------------------------------------------------------------------------------------------------------
 
-    # 클라이언트 수동 연결 해제 요청 처리, 1세트 운동 성공적으로 끝났다는 의미이므로 DB에 Record 데이터 저장
+    # 클라이언트 수동 연결 해제 요청 처리, 1세트 운동 끝나고 ExerciseSet is_finished, is_success 업데이트 후 DB에 저장
+    # DB에 저장된 ExerciseSet 객체를 마지막으로 소켓을 통해 클라이언트로 반환 후 소켓 disconnection
     @socketio.on('disconnect_client')
     def handle_disconnect_client(data):
         global is_first, distances   # 뼈 길이 배열
         phone_number = data.get('phoneNumber')
 
+        # 지금까지 한 운동 횟수
+        current_count = data.get('count')
         removed = clients.pop(phone_number, None)
+        
+        # 받아온 phoneNumber로 ExerciseSet 객체 GET
+        exercise_set = get_exercise_set(phone_number)
 
-         # 다음 세트 시작 시 다시 각 landmark 사이의 거리를 구하기 위해서 is_first 값 변경
-        is_first = True
+        # exercise_cnt 업데이트
+        # 지금까지 한 운동 횟수 업데이트
+        exercise_set.current_count = current_count
+        # 운동 종료 업데이트
+        exercise_set.is_finished = True
+        # 목표 운동 횟수 채우지 않았다면 실패한 운동 세트
+        if exercise_set.current_count < exercise_set.target_count:
+            exercise_set.is_success = False
+        # 목표 운동 횟수를 채웠다면 성공한 운동 세트
+        else:
+            exercise_set.is_success = True
 
-        # 소켓 연결 끊음.
-        disconnect(sid=removed)
-        # 전역변수 초기화
-        reset_globals()
-        print(f'🧹 연결 해제됨: {phone_number}')
+        # UPDATE된 updated_exercise_set 객체 GET
+        updated_exercise_set = save_updated_exercise_set(exercise_set)
 
+        # 끝난 운동 세트의 정보 클라이언트로 전송
+        if updated_exercise_set:
+            socketio.emit('next', {
+                "exerciseType": updated_exercise_set.exercise_type,
+                "current_count": updated_exercise_set.current_count,
+                "exercise_weight": updated_exercise_set.exercise_weight
+            }, to=removed)
+        if removed:
+            # 다음 세트 시작 시 다시 각 landmark 사이의 거리를 구하기 위해서 is_first 값 변경
+            is_first = True
+            reset_globals()
+            print(f'🧹 연결 해제됨: {phone_number}')
 
-
-#-----------------------------------------------------------------------------------------------------------
 
 
     @socketio.on('exercise_data')
@@ -210,7 +182,9 @@ def register_user_socket(socketio):
                     model_input = np.array(list(accel_seq_buffer)[-30:]).reshape(1, 30, 6)
                     prediction = fall_model.predict(model_input, verbose=0)
                     # 임계값 0.8로 수정해서 낙상 감지 기준을 더 빡빡하게
-                    fall = bool(prediction[0][0] > 1.5)
+
+                    fall = bool(prediction[0][0] > 111.0)
+                    
                     print(f"예측값: {prediction[0][0]}")
                     if fall and not fall_detected:
                         print("##########  낙상 감지 ##########")

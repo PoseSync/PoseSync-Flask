@@ -1,58 +1,102 @@
-from app.repositories.user_repository import create_user, insert_body_data, insert_body_type, save_record
+from app.repositories.user_repository import create_user, insert_body_data, insert_body_type
 from app.models import db
 from app.models.body_type import BodyType
 from app.services.squatService.squatService import squat_count
-from app.models.exercise_result import ExerciseResult
 from app.models.user import User
+from app.models.exercise_set import ExerciseSet
 
-# 운동이 중간에 종료됐을 때 record 저장
-def save_record_failed_service(record):
-    phone_number = record.phone_number
 
-    # phone_number로 User 테이블 조회
+def get_exercise_set_service(phone_number):
+    user = User.query.filter_by(phone_number=phone_number).first()
+    if not user:
+        raise ValueError("User not found")
+
+    # 가장 큰 routine_group 값 조회
+    last_group = db.session.query(db.func.max(ExerciseSet.routine_group))\
+        .filter_by(user_id=user.user_id).scalar()
+
+    if last_group is None:
+        raise ValueError("No exercise sets found")
+
+    sets = ExerciseSet.query.filter_by(user_id=user.user_id, routine_group=last_group).all()
+
+    return {
+        "phone_number": phone_number,
+        "routine_group": last_group,
+        "sets": [
+            {
+                "id": s.id,
+                "exercise_type": s.exercise_type,
+                "exercise_weight": s.exercise_weight,
+                "target_count": s.target_count,
+                "current_count": s.current_count,
+                "is_finished": s.is_finished,
+                "is_success": s.is_success,
+                "routine_group": s.routine_group,
+                "created_at": s.created_at.isoformat(),
+            }
+            for s in sets
+        ]
+    }
+
+
+# ExerciseSet 엔티티를 받아 UPDATE 한 후 저장하는 함수
+def save_updated_exercise_set(exercise_set:ExerciseSet):
+    updated_exercise_set = ExerciseSet.query.filter_by(id = exercise_set.id).first()
+    updated_exercise_set.current_count = exercise_set.current_count
+    updated_exercise_set.is_finished = exercise_set.is_finished
+    updated_exercise_set.is_success = exercise_set.is_success
+    db.session.add(updated_exercise_set)
+    db.session.flush()
+    return updated_exercise_set
+
+# 전화번호로 해당 User와 가장 가까운 ExerciseSet 반환 함수
+def get_exercise_set(phone_number):
     user = User.query.filter_by(phone_number=phone_number).first()
 
-    if user is None:
-        raise ValueError(f"해당 전화번호({phone_number})를 가진 사용자가 없습니다.")
-    
-    user_id = user.user_id
+    # 최신 순으로 정렬  
+    # 가장 최근 1개
+    exercise_set = ExerciseSet.query.filter_by(user_id=user.user_id, is_finished=False).order_by(ExerciseSet.created_at.desc()).first()
 
-    # 2025/04/26 코멘트(성재)
-    # ExerciseResult 객체 생성할 때 운동횟수는 Service 계층에서의 cnt 변수로 저장
-    # 그런데 Service 계층에서 운동횟수를 각 운동 클래스마다 세고 있어서 어떤 운동의 운동횟수인지 저장하기 위해서 다수의 조건문 필요
-    # 이게 최선인지 여러분들의 지혜가 필요
-    # 스쿼트 운동 저장
-    if (record.exercise_name == "squat"):
-        exercise_result = ExerciseResult(
-            user_id=user_id,
-            exercise_name=record.exercise_name,
-            count=squat_count,
-            weight=record.exercise_weight
-        )
-        return save_record(exercise_result)
-    return ""
+    return exercise_set
 
-# 운동이 성공적으로 끝났을 때 record 저장
-def save_record_success_service(record):
-    # record 안에 있는 phone_number 가져오기
-    phone_number = record.phone_number
+# 운동 세트 정보 저장
+def save_exercise_set_service(data, user, routine_group):
+    exercise_type = data['exerciseType']
+    weight = data['exercise_weight']
+    count = data['exercise_cnt']
 
-    # phone_number로 User 테이블 조회
-    user = User.query.filter_by(phone_number=phone_number).first()
-
-    if user is None:
-        raise ValueError(f"해당 전화번호({phone_number})를 가진 사용자가 없습니다.")
-    
-    user_id = user.user_id
-
-    # 여기서 ExerciseResult 객체 생성 후 Repository 계층으로 전달
-    exercise_result = ExerciseResult(
-        user_id=user_id,
-        exercise_name=record.exercise_name,
-        count=record.exercise_cnt,
-        weight=record.exercise_weight
+    new_set = ExerciseSet(
+        user_id=user.user_id,
+        exercise_type=exercise_type,
+        exercise_weight=weight,
+        target_count=count,
+        routine_group=routine_group
     )
-    return save_record(exercise_result)
+
+    db.session.add(new_set)
+    db.session.flush()
+    return new_set
+
+# User의 전화번호, 키 저장
+def save_phone_number_and_height(data):
+    height = data.get('height')
+    phone_number = data.get('phoneNumber')
+
+    # 이미 해당 데이터가 존재하는지 확인, 전화번호만 사용해서
+    # first() => 조건을 만족하는 첫번째 record get
+    user = User.query.filter_by(phone_number=phone_number).first()
+
+    # 이미 해당 phone_number를 갖고 있는 User record가 있다면 무시
+    if user:
+        return
+    
+    # User 객체 저장 후 return
+    new_user = User(phone_number=phone_number, height=height)
+    db.session.add(new_user)
+    db.session.commit()
+
+    return new_user
 
 
 # user table, body_data, body_type 테이블에 데이터 저장
