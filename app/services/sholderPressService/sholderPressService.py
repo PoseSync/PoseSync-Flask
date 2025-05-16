@@ -39,29 +39,29 @@ def process_dumbbell_shoulderPress(data):
     ]
 
     # 상완 벡터 (shoulder → elbow)
-    upper_arm_vecs = []
-    for side in [0, 1]:  # 0: left, 1: right
-        vec = np.array([
-            elbows_coord[side]['x'] - shoulders_coord[side]['x'],
-            elbows_coord[side]['y'] - shoulders_coord[side]['y'],
-            elbows_coord[side]['z'] - shoulders_coord[side]['z']
-        ])
-
-    # 전완 벡터 (elbow → wrist)
-    forearm_vecs = []
-    for side in [0, 1]:
-        vec = np.array([
-            wrists[side]['x'] - elbows_coord[side]['x'],
-            wrists[side]['y'] - elbows_coord[side]['y'],
-            wrists[side]['z'] - elbows_coord[side]['z']
-        ])
-
-    # 어깨 라인 벡터 (왼쪽 → 오른쪽)
-    shoulder_line_vec = normalize_vector(np.array([
-        shoulders_coord[1]['x'] - shoulders_coord[0]['x'],
-        shoulders_coord[1]['y'] - shoulders_coord[0]['y'],
-        shoulders_coord[1]['z'] - shoulders_coord[0]['z']
-    ]))
+    # upper_arm_vecs = []
+    # for side in [0, 1]:  # 0: left, 1: right
+    #     vec = np.array([
+    #         elbows_coord[side]['x'] - shoulders_coord[side]['x'],
+    #         elbows_coord[side]['y'] - shoulders_coord[side]['y'],
+    #         elbows_coord[side]['z'] - shoulders_coord[side]['z']
+    #     ])
+    #
+    # # 전완 벡터 (elbow → wrist)
+    # forearm_vecs = []
+    # for side in [0, 1]:
+    #     vec = np.array([
+    #         wrists[side]['x'] - elbows_coord[side]['x'],
+    #         wrists[side]['y'] - elbows_coord[side]['y'],
+    #         wrists[side]['z'] - elbows_coord[side]['z']
+    #     ])
+    #
+    # # 어깨 라인 벡터 (왼쪽 → 오른쪽)
+    # shoulder_line_vec = normalize_vector(np.array([
+    #     shoulders_coord[1]['x'] - shoulders_coord[0]['x'],
+    #     shoulders_coord[1]['y'] - shoulders_coord[0]['y'],
+    #     shoulders_coord[1]['z'] - shoulders_coord[0]['z']
+    # ]))
 
     # ✅ 양쪽 팔 각각 처리
     for side in [0, 1]:

@@ -234,12 +234,12 @@ def register_user_socket(socketio):
 
             # 2. 첫프레임 or 뼈 길이 없는경우 ->  뼈 길이 계산 및 이동 평균 적용 (프레임 간 변동 감소)
             # 사용자 기준으로 변환된 좌표를 사용해서 구함 (가이드라인 생성 로직에서 사용하는 좌표계)
-            if not distances:
-                current_distances = calculate_named_linked_distances(data['landmarks'], connections)
-                current_distances = map_distances_to_named_keys(current_distances, bone_name_map)
-                distances = current_distances
-                print('🦴🦴🦴🦴🦴뼈 길이 측정 완료')
-                print(f"뼈 길이 : {distances}")
+            # if not distances:
+            current_distances = calculate_named_linked_distances(data['landmarks'], connections)
+            current_distances = map_distances_to_named_keys(current_distances, bone_name_map)
+            distances = current_distances
+            print('🦴🦴🦴🦴🦴뼈 길이 측정 완료')
+            print(f"뼈 길이 : {distances}")
 
             # 서버 내부에서 사용할 수 있도록 뼈 길이 데이터 추가
             data["bone_lengths"] = distances
