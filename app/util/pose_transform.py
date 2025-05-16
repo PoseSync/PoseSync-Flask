@@ -22,7 +22,7 @@ class TransformData(TypedDict):
     hipCenter: Vec3
     axes     : Dict[str, Vec3]   # xAxis, yAxis, zAxis
 
-# ──────────────────────────────────────────────────────────────────────────────
+# -─────────────────────────────────────────────────────────────────────────────
 # 내부 수학 유틸
 # ──────────────────────────────────────────────────────────────────────────────
 def _normalize(v: np.ndarray) -> np.ndarray:
@@ -136,6 +136,8 @@ def reverse_pose_landmarks(
     """
     td(maxValue, hipCenter, axes)를 사용해 원래 월드 좌표 재구성
     """
+    print(f'역변환 전 => {norm}')
+
     axes = td['axes']
     max_v = td['maxValue']
     hc    = td['hipCenter']
