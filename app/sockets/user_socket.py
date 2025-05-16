@@ -6,6 +6,7 @@ from app.controllers.user_controller import handle_data_controller
 from app.services.user_info_service import get_exercise_set, save_updated_exercise_set
 from app.util.calculate_landmark_distance import connections, calculate_named_linked_distances, \
     map_distances_to_named_keys, bone_name_map
+from app.util.landmark_stabilizer import landmark_stabilizer
 from app.util.pose_landmark_enum import PoseLandmark   # id→공식명 enum
 import time
 from app.util.pose_transform import process_pose_landmarks, reverse_pose_landmarks
@@ -23,7 +24,9 @@ from app.util.calculate_landmark_accerlation import calculate_acceleration
 # 전화 걸기
 from app.util.call import call_user
 
-socketio = SocketIO(cors_allowed_origins="*")
+# socketio = SocketIO(cors_allowed_origins="*")
+
+
 # 각 클라이언트 세션 저장하는 딕셔너리
 clients = {}
 
@@ -53,16 +56,20 @@ LANDMARK_NAMES = [
     "왼뒤꿈치", "오른뒤꿈치", "왼발끝", "오른발끝"
 ]
 
+#-----------------------------------------------------------------------------------------------------------
+
 def register_user_socket(socketio):
 
     # 소켓 연결
     @socketio.on('connection')
     def handle_connect(data):
         phone_number = data.get('phoneNumber')
+
         clients[phone_number] = request.sid
         global is_first
-        is_first = True #첫 서버연결 때 운동 패킷 첫 연결여부 True
+        is_first = True  # 첫 서버연결 때 운동 패킷 첫 연결여부 True
         print(f' 클라이언트 연결됨 : {phone_number} -> SID {request.sid}')
+
 
     # 운동 세트 시작할 때
     # @socketio.on('restart')
@@ -79,6 +86,7 @@ def register_user_socket(socketio):
     #     )
     #     print(f' 클라이언트 연결됨 : {phone_number} -> SID {request.sid}')
 
+
     # 소켓 연결 끊음
     # 신경 안 써도 될듯 이 부분.
     @socketio.on('disconnection')
@@ -94,12 +102,15 @@ def register_user_socket(socketio):
                 break
 
 
+# -----------------------------------------------------------------------------------------------------------
+
     # 클라이언트 수동 연결 해제 요청 처리, 1세트 운동 끝나고 ExerciseSet is_finished, is_success 업데이트 후 DB에 저장
     # DB에 저장된 ExerciseSet 객체를 마지막으로 소켓을 통해 클라이언트로 반환 후 소켓 disconnection
     @socketio.on('disconnect_client')
     def handle_disconnect_client(data):
-        global is_first, distances
+        global is_first, distances   # 뼈 길이 배열
         phone_number = data.get('phoneNumber')
+
         # 지금까지 한 운동 횟수
         current_count = data.get('count')
         removed = clients.pop(phone_number, None)
@@ -132,15 +143,10 @@ def register_user_socket(socketio):
         if removed:
             # 다음 세트 시작 시 다시 각 landmark 사이의 거리를 구하기 위해서 is_first 값 변경
             is_first = True
-            distances = {}
-
-            # 소켓 연결 끊음.
-            disconnect(sid=removed)
-            # 전역변수 초기화
             reset_globals()
             print(f'🧹 연결 해제됨: {phone_number}')
-        else:
-            print(f'⚠️ 연결 정보 없음: {phone_number}')
+
+
 
     @socketio.on('exercise_data')
     def handle_exercise_data(data):
@@ -149,6 +155,14 @@ def register_user_socket(socketio):
         try:
             # 클라이언트에서 받은 원본 랜드마크 데이터
             landmarks = data.get('landmarks', [])
+
+            # # 1. 랜드마크 안정화 적용 (프레임 내 떨림 감소)
+            # try:
+            #     landmarks = landmark_stabilizer.stabilize_landmarks(landmarks, dead_zone=0.05)
+            #     data['landmarks'] = landmarks  # 안정화된 랜드마크로 업데이트
+            # except Exception as e:
+            #     print(f"랜드마크 안정화 중 오류 발생: {e}")
+            #     # 오류 발생 시 원본 landmarks 사용
 
             fall = False
 
@@ -168,7 +182,9 @@ def register_user_socket(socketio):
                     model_input = np.array(list(accel_seq_buffer)[-30:]).reshape(1, 30, 6)
                     prediction = fall_model.predict(model_input, verbose=0)
                     # 임계값 0.8로 수정해서 낙상 감지 기준을 더 빡빡하게
+
                     fall = bool(prediction[0][0] > 111.0)
+                    
                     print(f"예측값: {prediction[0][0]}")
                     if fall and not fall_detected:
                         print("##########  낙상 감지 ##########")
@@ -177,31 +193,28 @@ def register_user_socket(socketio):
                         call_user()
 
 
-            # id → name 필드 보강
-            for lm in data['landmarks']:
-                lm['name'] = PoseLandmark(lm['id']).name
 
-
-            # 처음 데이터 통신할 때 뼈 길이 계산
-            if is_first:
-                is_first = False
-
-                # 뼈 길이 계산
-                distances = calculate_named_linked_distances(  # 뼈 길이
-                    data['landmarks'], connections
-                )
-                distances = map_distances_to_named_keys(distances, bone_name_map)
-                print(f"뼈 길이 : {distances}")
-            #--------------------------------------------------------------------------------------
+            # --------------------------------------------------------------------------------------
 
             # 사람 중심 좌표계로 변환 및 정규화
             transformed_landmarks, transform_data = process_pose_landmarks(landmarks)
 
-
-
             # 변환된 랜드마크로
             data['landmarks'] = transformed_landmarks
             data['__transformData'] = transform_data
+
+           # id → name 필드 보강
+            for lm in data['landmarks']:
+                lm['name'] = PoseLandmark(lm['id']).name
+
+            # 2. 첫프레임 or 뼈 길이 없는경우 ->  뼈 길이 계산 및 이동 평균 적용 (프레임 간 변동 감소)
+            # 사용자 기준으로 변환된 좌표를 사용해서 구함 (가이드라인 생성 로직에서 사용하는 좌표계)
+            if not distances:
+                current_distances = calculate_named_linked_distances(data['landmarks'], connections)
+                current_distances = map_distances_to_named_keys(current_distances, bone_name_map)
+                distances = current_distances
+                print('🦴🦴🦴🦴🦴뼈 길이 측정 완료')
+                print(f"뼈 길이 : {distances}")
 
             # 서버 내부에서 사용할 수 있도록 뼈 길이 데이터 추가
             data["bone_lengths"] = distances
@@ -225,7 +238,6 @@ def register_user_socket(socketio):
 
             # 시각화용 랜드마크 추가하고 원본 제거
             result['visualizationLandmarks'] = visualization_landmarks
-
 
             print('⭕')
 
@@ -263,52 +275,9 @@ def register_user_socket(socketio):
             emit('result', {'error': '서버 내부 오류가 발생했습니다.'})
 
 
-# 테스트 메서드
-##########################################################################################################
-
-# 1. 기본 오프셋 테스트
-def apply_test_offset_basic(result):
-    """모든 랜드마크에 일정한 오프셋 적용"""
-    if 'landmarks' in result:
-        for landmark in result['landmarks']:
-            landmark['x'] += 0.2  # 오른쪽으로 이동
-            landmark['y'] += 0.1  # 아래로 이동
-
-
-# 2. 파동 패턴 테스트
-def apply_test_offset_wave(result):
-    """파동 패턴으로 랜드마크 이동 (더 확실한 시각적 차이)"""
-    if 'landmarks' in result:
-        for idx, landmark in enumerate(result['landmarks']):
-            # 사인파 패턴으로 x, y 오프셋
-            offset_x = 0.15 * math.sin(idx * 0.5)
-            offset_y = 0.1 * math.cos(idx * 0.5)
-            landmark['x'] += offset_x
-            landmark['y'] += offset_y
-
-
-# 3. 특정 관절 확대 테스트
-def apply_test_offset_joints(result):
-    """주요 관절만 크게 이동"""
-    if 'landmarks' in result:
-        key_joints = {
-            11: (0.3, 0.0),  # 왼쪽 어깨
-            12: (-0.3, 0.0),  # 오른쪽 어깨
-            13: (0.4, 0.2),  # 왼쪽 팔꿈치
-            14: (-0.4, 0.2),  # 오른쪽 팔꿈치
-            15: (0.5, 0.3),  # 왼쪽 손목
-            16: (-0.5, 0.3),  # 오른쪽 손목
-        }
-
-        for idx, landmark in enumerate(result['landmarks']):
-            if idx in key_joints:
-                offset_x, offset_y = key_joints[idx]
-                landmark['x'] += offset_x
-                landmark['y'] += offset_y
-
 # 전역변수 초기화 함수
 def reset_globals():
-    global accel_seq_buffer, fall_detected, is_first, distances
+    global accel_seq_buffer, fall_detected, is_first, distances, current_distances
 
     # 시퀀스 버퍼 초기화
     accel_seq_buffer.clear()
@@ -321,5 +290,7 @@ def reset_globals():
 
     # 뼈 길이 초기화
     distances = {}
+    print('❌❌❌뼈 길이 데이터 빈 배열로 초기화 완료❌❌❌')
+
 
     print("🌀 전역 상태가 초기화되었습니다.")
