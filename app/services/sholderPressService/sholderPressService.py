@@ -13,7 +13,7 @@ def process_dumbbell_shoulderPress(data):
     phone_number = data.get("phoneNumber")  # 개인식별자
     bone_lengths = data.get("bone_lengths", {})  # 첫 exercise_date 패킷 연결에서 계산한 뼈 길이
 
-    landmarks = landmark_stabilizer.stabilize_landmarks(landmarks, dead_zone=0.03)
+    # landmarks = landmark_stabilizer.stabilize_landmarks(landmarks, dead_zone=0.2)
 
     # 안정화는 소켓 레벨에서 이미 적용되었으므로 여기서는 제거
     # 소켓에서 이미 안정화된 랜드마크를 전달받아 사용
@@ -74,6 +74,9 @@ def process_dumbbell_shoulderPress(data):
         current_upper_arm_length = bone_lengths[f"{side_label}_upper_arm_length"]
         current_forearm_length = bone_lengths[f"{side_label}_forearm_length"]
 
+        print(f"{side_label} upper arm length: {current_upper_arm_length}")
+        print(f"{side_label} forearm length: {current_forearm_length}")
+
         # 🟥 팔꿈치 위치 계산 (전방 외각 유지)
         elbow_pos = calculate_elbow_position_by_forward_angle(
             shoulder_coord=[shoulder['x'], shoulder['y'], shoulder['z']],
@@ -128,8 +131,12 @@ def process_dumbbell_shoulderPress(data):
         # visibility 값 복원
         landmarks[wrist_id]['visibility'] = wrist_visibility
 
+    # landmarks = landmark_stabilizer.stabilize_landmarks(landmarks, dead_zone=0.03)
+
     # 수정된 landmarks를 data에 다시 저장
     data["landmarks"] = landmarks
+
+
 
     return data  # 수정된 data
 
