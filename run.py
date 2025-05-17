@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_socketio import SocketIO
 from app.sockets.user_socket import register_user_socket
-from app.models import db  # models/__init__.py에서 정의한 db
+from app.models import db, User  # models/__init__.py에서 정의한 db
 import config
 from sqlalchemy import inspect
 from app.controllers.user_controller import save_body_data, body_data_bp

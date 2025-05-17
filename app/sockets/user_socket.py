@@ -112,40 +112,46 @@ def register_user_socket(socketio):
         phone_number = data.get('phoneNumber')
 
         # 지금까지 한 운동 횟수
-        current_count = data.get('count')
+        # current_count = data.get('count')
         removed = clients.pop(phone_number, None)
         
-        # 받아온 phoneNumber로 ExerciseSet 객체 GET
-        exercise_set = get_exercise_set(phone_number)
-
-        # exercise_cnt 업데이트
-        # 지금까지 한 운동 횟수 업데이트
-        exercise_set.current_count = current_count
-        # 운동 종료 업데이트
-        exercise_set.is_finished = True
-        # 목표 운동 횟수 채우지 않았다면 실패한 운동 세트
-        if exercise_set.current_count < exercise_set.target_count:
-            exercise_set.is_success = False
-        # 목표 운동 횟수를 채웠다면 성공한 운동 세트
-        else:
-            exercise_set.is_success = True
+        # # 받아온 phoneNumber로 ExerciseSet 객체 GET
+        # exercise_set = get_exercise_set(phone_number)
+        #
+        # # exercise_cnt 업데이트
+        # # 지금까지 한 운동 횟수 업데이트
+        # exercise_set.current_count = current_count
+        # # 운동 종료 업데이트
+        # exercise_set.is_finished = True
+        # # 목표 운동 횟수 채우지 않았다면 실패한 운동 세트
+        # if exercise_set.current_count < exercise_set.target_count:
+        #     exercise_set.is_success = False
+        # # 목표 운동 횟수를 채웠다면 성공한 운동 세트
+        # else:
+        #     exercise_set.is_success = True
 
         # UPDATE된 updated_exercise_set 객체 GET
-        updated_exercise_set = save_updated_exercise_set(exercise_set)
+        # updated_exercise_set = save_updated_exercise_set(exercise_set)
 
         # 끝난 운동 세트의 정보 클라이언트로 전송
-        if updated_exercise_set:
-            socketio.emit('next', {
-                "exerciseType": updated_exercise_set.exercise_type,
-                "current_count": updated_exercise_set.current_count,
-                "exercise_weight": updated_exercise_set.exercise_weight
-            }, to=removed)
+        # if updated_exercise_set:
+        #     socketio.emit('next', {
+        #         "exerciseType": updated_exercise_set.exercise_type,
+        #         "current_count": updated_exercise_set.current_count,
+        #         "exercise_weight": updated_exercise_set.exercise_weight
+        #     }, to=removed)
         if removed:
             # 다음 세트 시작 시 다시 각 landmark 사이의 거리를 구하기 위해서 is_first 값 변경
             is_first = True
+            distances = {}
+
+            # 소켓 연결 끊음.
+            disconnect(sid=removed)
+            # 전역변수 초기화
             reset_globals()
             print(f'🧹 연결 해제됨: {phone_number}')
-
+        else:
+            print(f'⚠️ 연결 정보 없음: {phone_number}')
 
 
     @socketio.on('exercise_data')
