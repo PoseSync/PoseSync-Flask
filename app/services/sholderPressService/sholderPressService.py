@@ -7,10 +7,11 @@ from app.util.pose_landmark_enum import PoseLandmark
 from app.util.shoulderPress_util import calculate_elbow_position_by_forward_angle, \
     adjust_wrist_direction_to_preserve_min_angle
 
+# 공유 전역 상태에서 body_type 가져오기
+from app.shared.global_state import current_user_body_type
 
 def process_dumbbell_shoulderPress(data):
     landmarks = data.get("landmarks", [])
-    phone_number = data.get("phoneNumber")  # 개인식별자
     bone_lengths = data.get("bone_lengths", {})  # 첫 exercise_date 패킷 연결에서 계산한 뼈 길이
 
     # landmarks = landmark_stabilizer.stabilize_landmarks(landmarks, dead_zone=0.2)
@@ -18,9 +19,8 @@ def process_dumbbell_shoulderPress(data):
     # 안정화는 소켓 레벨에서 이미 적용되었으므로 여기서는 제거
     # 소켓에서 이미 안정화된 랜드마크를 전달받아 사용
 
-    # ✅ 사용자 체형 + 신체 길이 조회
-    body_info = get_body_info_for_dumbbell_shoulder_press(phone_number)
-    arm_type = body_info["arm_type"]
+    # 현재 저장된 body_type 사용 (없으면 기본값)
+    arm_type = current_user_body_type if current_user_body_type else "AVG"
 
     # 어깨좌표 [0] : 왼쪽 [1] : 오른쪽
     shoulders_coord = [
@@ -135,8 +135,6 @@ def process_dumbbell_shoulderPress(data):
 
     # 수정된 landmarks를 data에 다시 저장
     data["landmarks"] = landmarks
-
-
 
     return data  # 수정된 data
 
