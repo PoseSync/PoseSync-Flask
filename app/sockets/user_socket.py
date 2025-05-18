@@ -1,40 +1,33 @@
-import math
-
-from flask_socketio import emit, SocketIO, disconnect
-from flask import request
-from app.controllers.user_controller import handle_data_controller
-from app.services.user_info_service import get_exercise_set, save_updated_exercise_set
-from app.util.calculate_landmark_distance import connections, calculate_named_linked_distances, \
-    map_distances_to_named_keys, bone_name_map
-from app.util.landmark_stabilizer import landmark_stabilizer
-from app.util.pose_landmark_enum import PoseLandmark  # id→공식명 enum
 import time
-from app.util.pose_transform import process_pose_landmarks, reverse_pose_landmarks
-from app.services.body_service.body_spec_service import get_body_info_for_dumbbell_shoulder_press
 
-from collections import deque
-import time
 import numpy as np
+from flask import request
+from flask_socketio import emit, disconnect
 
 # AI 모델 가져오기
 from app.ai.ai_model import fall_model
-
-# 가속도 계산
-from app.util.calculate_landmark_accerlation import calculate_acceleration
-
-# 전화 걸기
-from app.util.call import call_user
-
+from app.controllers.user_controller import handle_data_controller
+from app.services.body_service.body_spec_service import get_body_info_for_dumbbell_shoulder_press
+from app.services.user_info_service import get_exercise_set, save_updated_exercise_set
 # 공유 전역 상태 가져오기
 from app.shared.global_state import (
-    accel_seq_buffer, 
-    fall_detected, 
-    is_first, 
-    distances, 
-    current_user_body_type, 
-    client_sid,
+    accel_seq_buffer,
+    fall_detected,     # 추가
+    is_first,          # 추가
+    distances,         # 추가
+    current_user_body_type,  # 추가
+    client_sid,        # 추가
+    press_counter,     # 추가
     reset_globals
 )
+# 가속도 계산
+from app.util.calculate_landmark_accerlation import calculate_acceleration
+from app.util.calculate_landmark_distance import connections, calculate_named_linked_distances, \
+    map_distances_to_named_keys, bone_name_map
+# 전화 걸기
+from app.util.call import call_user
+from app.util.pose_landmark_enum import PoseLandmark  # id→공식명 enum
+from app.util.pose_transform import process_pose_landmarks, reverse_pose_landmarks
 
 # 테스트 모드 전역 변수
 TEST_OFFSET_ENABLED = False  # 테스트 모드 활성화
@@ -49,6 +42,7 @@ LANDMARK_NAMES = [
 
 
 def register_user_socket(socketio):
+
     @socketio.on('exercise_data')
     def handle_exercise_data(data):
         global is_first, distances, fall_detected, current_user_body_type, client_sid
@@ -139,13 +133,13 @@ def register_user_socket(socketio):
             # 시각화용 랜드마크 추가하고 원본 제거
             result['visualizationLandmarks'] = visualization_landmarks
 
-            print('⭕')
+            # print('⭕')
 
             # 레이턴시 측정
             elapsed_ms = (time.perf_counter() - start_time) * 1000
             result['latency'] = round(elapsed_ms, 2)
 
-            print('♥❌')
+            # print('♥❌')
 
             # 중요: requestId를 결과에 포함
             result['requestId'] = request_id
@@ -220,25 +214,3 @@ def register_user_socket(socketio):
         reset_globals()
         print(f'🧹 연결 해제됨: {phone_number}')
 
-
-# 전역변수 초기화 함수
-def reset_globals():
-    global accel_seq_buffer, fall_detected, is_first, distances, current_user_body_type
-
-    # 시퀀스 버퍼 초기화
-    accel_seq_buffer.clear()
-
-    # 낙상 감지 플래그 초기화
-    fall_detected = False
-
-    # 첫 프레임 여부 초기화
-    is_first = True
-
-    # 뼈 길이 초기화
-    distances = {}
-
-    # 사용자 body_type 초기화
-    current_user_body_type = None
-
-    print('❌❌❌뼈 길이 데이터 빈 배열로 초기화 완료❌❌❌')
-    print("🌀 전역 상태가 초기화되었습니다.")
