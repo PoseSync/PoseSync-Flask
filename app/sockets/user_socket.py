@@ -47,7 +47,6 @@ def register_user_socket(socketio):
     @socketio.on('monitor_fall')
     def monitor_fall(data):
         global is_first, distances, fall_detected, current_user_body_type, client_sid
-        start_time = time.perf_counter()
 
         # 현재 연결된 클라이언트의 SID 저장
         client_sid = request.sid
