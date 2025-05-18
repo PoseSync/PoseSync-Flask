@@ -4,7 +4,8 @@ from app.util.pose_landmark_enum import PoseLandmark
 from app.util.exercise_util.shoulderPress_util import calculate_elbow_position_by_forward_angle, \
     adjust_wrist_direction_to_preserve_min_angle
 # 공유 전역 상태에서 body_type과 카운터 가져오기
-from app.shared.global_state import current_user_body_type, press_counter
+from app.shared.global_state import press_counter, current_user_body_type
+
 
 def process_dumbbell_shoulderPress(data):
     landmarks = data.get("landmarks", [])
@@ -18,7 +19,7 @@ def process_dumbbell_shoulderPress(data):
 
 
     # 현재 저장된 body_type 사용 (없으면 기본값)
-    arm_type = current_user_body_type if current_user_body_type else "AVG"
+    arm_type = current_user_body_type.get("arm_type", "AVG")
 
 
     # 어깨좌표 [0] : 왼쪽 [1] : 오른쪽
