@@ -10,8 +10,11 @@ class BodyType(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey('user.user_id'), nullable=False)
 
+
     arm_type = db.Column(Enum('LONG', 'AVG', 'SHORT', name='arm_enum'), nullable=True) # 상완-전완 비율 타입
     femur_type = db.Column(Enum('LONG', 'AVG', 'SHORT', name='femur_enum'), nullable=True) # 대퇴골-정강이 비율 타입
+
+
 
 
     shoulder_type = db.Column(Enum('WIDE', 'AVG', 'NARROW', name='shoulder_enum'), nullable=True) # 어깨 : 신장 비율 타입

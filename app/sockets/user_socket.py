@@ -271,4 +271,3 @@ def register_user_socket(socketio):
         # 전역변수 초기화
         reset_globals()
         print(f'🧹 연결 해제됨: {phone_number}')
-

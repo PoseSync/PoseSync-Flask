@@ -7,9 +7,11 @@ from sqlalchemy import inspect
 from app.controllers.user_controller import save_body_data, body_data_bp
 from app.services.user_info_service import save_phone_number_and_height, save_exercise_set_service, get_exercise_set_service
 from app.models.exercise_set import ExerciseSet
+
 from app.models.user import User
 
 from flask_cors import CORS
+
 
 
 app = Flask(__name__)
