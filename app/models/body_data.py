@@ -9,7 +9,7 @@ class BodyData(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey('user.user_id'), nullable=False)
 
-    weight = db.Column(db.Numeric(5, 2))
+
     upper_arm_length = db.Column(db.Numeric(5, 2))
     forearm_length = db.Column(db.Numeric(5, 2))
     femur_length = db.Column(db.Numeric(5, 2))

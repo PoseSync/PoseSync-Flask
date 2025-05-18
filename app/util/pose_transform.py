@@ -64,7 +64,9 @@ def _calculate_axes(lms: List[Landmark]) -> Dict[str, Vec3]:
 def process_pose_landmarks(raw: List[Landmark]) -> Tuple[List[Landmark], TransformData]:
 
 
-    print(f'정변환 전 => {raw}')
+
+    # print(f'정변환 전 => {raw}')
+
 
 
     """
@@ -136,7 +138,9 @@ def reverse_pose_landmarks(
     """
     td(maxValue, hipCenter, axes)를 사용해 원래 월드 좌표 재구성
     """
-    print(f'역변환 전 => {norm}')
+
+    # print(f'역변환 전 => {norm}')
+
 
     axes = td['axes']
     max_v = td['maxValue']
@@ -159,7 +163,9 @@ def reverse_pose_landmarks(
             "visibility": lm.get('visibility', 1.0)
         })
 
-    print(f'역변환 후 => {restored}')
+
+    # print(f'역변환 후 => {restored}')
+
 
     return restored
 
