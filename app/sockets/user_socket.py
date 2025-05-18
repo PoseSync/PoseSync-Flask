@@ -43,6 +43,64 @@ LANDMARK_NAMES = [
 
 def register_user_socket(socketio):
 
+    # 운동 사이 쉬는 시간에도 낙상 감지
+    @socketio.on('monitor_fall')
+    def monitor_fall(data):
+        global is_first, distances, fall_detected, current_user_body_type, client_sid
+
+        # 현재 연결된 클라이언트의 SID 저장
+        client_sid = request.sid
+
+        try:
+            # 클라이언트에서 받은 원본 랜드마크 데이터
+            landmarks = data.get('landmarks', [])
+            request_id = data.get('requestId')
+
+            fall = False
+            print(f'클라이언트에서 받자마자 => {landmarks}')
+
+            # 1. 가속도 계산 및 시퀀스 버퍼에 누적
+            acceleration = calculate_acceleration(landmarks)
+            if acceleration:
+                # head와 pelvis의 평균 가속도를 [x, y, z]
+                vec = acceleration["head_acceleration"] + acceleration["pelvis_acceleration"]
+                accel_seq_buffer.append(vec)
+
+                print(f"[{time.time()}] ✅ accel 추가됨, 현재 길이: {len(accel_seq_buffer)}")
+
+                # 버퍼가 30개 이상일 때 매 프레임마다 예측 수행
+                if len(accel_seq_buffer) >= 30:
+                    model_input = np.array(list(accel_seq_buffer)[-30:]).reshape(1, 30, 6)
+                    prediction = fall_model.predict(model_input, verbose=0)
+                    # 임계값 0.8로 수정해서 낙상 감지 기준을 더 빡빡하게
+
+                    fall = bool(prediction[0][0] > 111.0)
+
+                    print(f"예측값: {prediction[0][0]}")
+                    if fall and not fall_detected:
+                        print("##########  낙상 감지 ##########")
+                        fall_detected = True
+                        # 전화 걸기
+                        call_user()
+            result = {}
+
+            # 중요: requestId를 결과에 포함
+            result['requestId'] = request_id
+
+            # 낙상여부를 반환 데이터에 추가, true/false 값
+            result['is_fall'] = fall
+
+            # 결과 전송
+            print(f'클라이언트에게 전송 => {result}')
+            socketio.emit('result', result, to=client_sid)
+
+        except Exception as e:
+            print(f"❌ 데이터 처리 중 예외 발생: {e}")
+            import traceback
+            traceback.print_exc()
+            emit('result', {'error': '서버 내부 오류가 발생했습니다.'})
+
+
     @socketio.on('exercise_data')
     def handle_exercise_data(data):
         global is_first, distances, fall_detected, current_user_body_type, client_sid
