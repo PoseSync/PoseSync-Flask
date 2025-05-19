@@ -5,6 +5,14 @@ from app.services.squatService.squatService import squat_count
 from app.models.user import User
 from app.models.exercise_set import ExerciseSet
 
+# 전화번호로 User를 조회해서 height 반환하는 함수
+def get_height_service(phone_number):
+    user = User.query.filter_by(phone_number=phone_number).first()
+    if not user:
+        raise ValueError("User not found")
+
+    return user.height
+
 
 def get_exercise_set_service(phone_number):
     user = User.query.filter_by(phone_number=phone_number).first()
