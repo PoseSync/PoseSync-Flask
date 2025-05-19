@@ -12,6 +12,7 @@ from app.models.user import User
 
 from flask_cors import CORS
 
+from app.controllers.body_analysis_controller import body_analysis_bp
 
 
 app = Flask(__name__)
@@ -24,6 +25,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = config.SQLALCHEMY_TRACK_MODIFICAT
 
 # Flask 인스턴스에 BluePrint 등록 => Controller에서 설정한 라우터를 사용할 수 있기 위해 필수
 app.register_blueprint(body_data_bp)
+app.register_blueprint(body_analysis_bp)
 
 # SQLAlchemy 초기화
 db.init_app(app)

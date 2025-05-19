@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from app.services.user_info_service import get_height_service
 from app.services.body_service.body_analysis_service import analyze_body_type, save_body_analysis_result
 
 # 블루프린트 생성
@@ -9,19 +10,22 @@ def analyze_body():
     """체형 분석 API 엔드포인트"""
     try:
         data = request.get_json()
+        # 랜드마크 10개 받아오기
         landmarks = data.get('landmarks', [])
-        height_cm = data.get('height', 170)  # 기본 키 설정
+        # 전화번호
         phone_number = data.get('phoneNumber')
         
         # 필수 입력값 검증
         if not landmarks:
             return jsonify({"success": False, "error": "랜드마크 데이터가 없습니다"}), 400
         
-        if not height_cm:
-            return jsonify({"success": False, "error": "키 정보가 없습니다"}), 400
+        # 전화번호로 User의 키 GET
+        height = float(get_height_service(phone_number=phone_number))
+        # 10개의 프레임들의 평균값을 갖는 새로운 landmarks 리스트 생성
+        new_landmarks = average_landmarks(landmarks)
         
         # 체형 분석 수행
-        analysis_result = analyze_body_type(landmarks, height_cm)
+        analysis_result = analyze_body_type(new_landmarks, height)
         
         # 결과 DB에 저장 (전화번호가 있는 경우)
         if phone_number:
@@ -32,3 +36,43 @@ def analyze_body():
     
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+    
+def average_landmarks(landmarks_sequence):
+    """
+    landmarks_sequence: 길이가 10인 리스트, 각 요소는 33개의 landmark 딕셔너리
+    반환값: id별 평균 좌표 리스트 (총 33개)
+    """
+    from collections import defaultdict
+
+    # 초기화
+    coord_sum = defaultdict(lambda: {"x": 0.0, "y": 0.0, "z": 0.0, "count": 0})
+
+    # 프레임 순회
+    for frame in landmarks_sequence:
+        for lm in frame:
+            lm_id = lm["id"]
+            coord_sum[lm_id]["x"] += lm["x"]
+            coord_sum[lm_id]["y"] += lm["y"]
+            coord_sum[lm_id]["z"] += lm["z"]
+            coord_sum[lm_id]["count"] += 1
+
+    # 평균 계산
+    result = []
+    for lm_id in range(33):
+        if coord_sum[lm_id]["count"] > 0:
+            count = coord_sum[lm_id]["count"]
+            result.append({
+                "id": lm_id,
+                "x": coord_sum[lm_id]["x"] / count,
+                "y": coord_sum[lm_id]["y"] / count,
+                "z": coord_sum[lm_id]["z"] / count,
+            })
+        else:
+            result.append({
+                "id": lm_id,
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+            })
+
+    return result
