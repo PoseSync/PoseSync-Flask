@@ -68,6 +68,13 @@ def get_exercise_set(phone_number):
 
     return exercise_set
 
+def is_user_exist(data):
+    phone_number = data.get('phoneNumber')
+
+    user = User.query.filter_by(phone_number=phone_number).first()
+    if user:
+        return user
+
 # 운동 세트 정보 저장
 def save_exercise_set_service(data, user, routine_group):
     exercise_type = data['exerciseType']
