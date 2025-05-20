@@ -76,10 +76,6 @@ def save_user():
                 "phone_number": user.phone_number,
                 "height": str(user.height)
             }), 201
-        else:
-            return jsonify({
-                "message": "이미 존재하는 사용자입니다."
-            }), 400
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400   
