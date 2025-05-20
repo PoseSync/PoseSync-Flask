@@ -5,7 +5,7 @@ from app.models import db, User  # models/__init__.py에서 정의한 db
 import config
 from sqlalchemy import inspect
 from app.controllers.user_controller import save_body_data, body_data_bp
-from app.services.user_info_service import save_phone_number_and_height, save_exercise_set_service, get_exercise_set_service
+from app.services.user_info_service import save_phone_number_and_height, save_exercise_set_service, get_exercise_set_service, is_user_exist
 from app.models.exercise_set import ExerciseSet
 
 from app.models.user import User
@@ -57,7 +57,16 @@ def save_user():
         # 필수 값 검증
         if phone_number is None or height is None:
             return jsonify({"error": "phoneNumber and height are required"}), 400
-
+        
+        user = is_user_exist(data=data)
+        if user:
+            return jsonify({
+                "message": "User 조회 성공",
+                "user_id": user.user_id,
+                "phone_number": user.phone_number,
+                "height": str(user.height)
+            }), 200
+    
         user = save_phone_number_and_height(data=data)
 
         if user:
