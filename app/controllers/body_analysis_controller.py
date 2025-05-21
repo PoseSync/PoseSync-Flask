@@ -1,6 +1,10 @@
 from flask import Blueprint, request, jsonify
 from app.services.user_info_service import get_height_service
-from app.services.body_service.body_analysis_service import analyze_body_type, save_body_analysis_result
+from app.services.body_service.body_analysis_service import analyze_body_type, save_body_analysis_result, save_body_length_data
+from app.util.pose_transform import process_pose_landmarks
+from app.util.calculate_landmark_distance import connections, calculate_named_linked_distances, \
+    map_distances_to_named_keys, bone_name_map
+from app.util.pose_landmark_enum import PoseLandmark
 
 # 블루프린트 생성
 body_analysis_bp = Blueprint('body_analysis', __name__, url_prefix='/api/body-analysis')
@@ -26,10 +30,20 @@ def analyze_body():
         
         # 체형 분석 수행
         analysis_result = analyze_body_type(new_landmarks, height)
+
+        # 10개의 프레임 Landmarks 평균값 정규화
+        transformed_landmarks, transform_data = process_pose_landmarks(new_landmarks)
+        for lm in transformed_landmarks:
+            lm['name'] = PoseLandmark(lm['id']).name
+        
+        current_distances = calculate_named_linked_distances(transformed_landmarks, connections)
+        current_distances = map_distances_to_named_keys(current_distances, bone_name_map)
+        distances = current_distances
         
         # 결과 DB에 저장 (전화번호가 있는 경우)
         if phone_number:
             save_success = save_body_analysis_result(phone_number, analysis_result)
+            save_body_length_data(phone_number, distances)
             analysis_result["saved_to_db"] = save_success
         
         return jsonify({"success": True, "result": analysis_result}), 200
