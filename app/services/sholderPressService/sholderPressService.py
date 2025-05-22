@@ -15,11 +15,7 @@ def process_dumbbell_shoulderPress(data):
     # landmarks = landmark_stabilizer.stabilize_landmarks(landmarks, dead_zone=0.2)
 
     # 안정화는 소켓 레벨에서 이미 적용되었으므로 여기서는 제거
-    # 소켓에서 이미 안정화된 랜드마크를 전달받아 사용
-
-
-    # 현재 저장된 body_type 사용 (없으면 기본값)
-    arm_type = current_user_body_type.get("arm_type", "AVG")
+    arm_type = current_user_body_type.get("arm_type", "AVG") if current_user_body_type else "AVG"
 
 
     # 어깨좌표 [0] : 왼쪽 [1] : 오른쪽

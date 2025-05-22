@@ -1,5 +1,3 @@
-import numpy as np
-
 from app.shared.global_state import current_user_body_type
 from app.util.pose_landmark_enum import PoseLandmark
 from app.util.exercise_util.squat_util import (
@@ -20,17 +18,15 @@ def process_squat(data):
     landmarks = data.get("landmarks", [])
     bone_lengths = data.get("bone_lengths", {})
 
-    # body_info에서 femur_type과 shoulder_width 가져오기
-    # 실제로는 body_spec_service를 통해 가져와야 함
-    phone_number = data.get("phoneNumber")
+    # DB에서 체형 타입 가져오기 (AVG는 기본값)
+    femur_type = current_user_body_type.get("femur_type") if current_user_body_type else "AVG"
 
-    # 임시로 기본값 설정 (실제로는 DB에서 가져와야 함)
-    femur_type = current_user_body_type.get("femur_type", "AVG")
-    shoulder_width = current_user_body_type.get("shoulder_width", 0.4)
-
-    # 필요한 뼈 길이 정보
-    femur_length = bone_lengths.get("left_thigh_length", 0.4)
-    tibia_length = bone_lengths.get("left_calf_length", 0.35)
+    # 모든 bone_lengths를 필수값으로 처리
+    shoulder_width = bone_lengths["shoulder_width"]
+    left_femur_length = bone_lengths["left_thigh_length"]
+    left_tibia_length = bone_lengths["left_calf_length"]
+    right_femur_length = bone_lengths["right_thigh_length"]
+    right_tibia_length = bone_lengths["right_calf_length"]
 
     # 현재 엉덩이 위치
     left_hip = landmarks[PoseLandmark.LEFT_HIP]
@@ -52,8 +48,8 @@ def process_squat(data):
     center_x = ref['center_x']
     ground_y = ref['ground_y']
 
-    # 엉덩이 높이 제한 적용 (지면 기준)
-    constrained_hip_y = clamp_hip_height(hip_center[1], ground_y, femur_length, tibia_length)
+    # 엉덩이 높이 제한 적용 (지면 기준) - 왼쪽 다리 기준
+    constrained_hip_y = clamp_hip_height(hip_center[1], ground_y, left_femur_length, left_tibia_length)
 
     # 제한된 높이로 엉덩이 위치 업데이트
     if constrained_hip_y != hip_center[1]:
@@ -91,14 +87,14 @@ def process_squat(data):
     landmarks[PoseLandmark.RIGHT_ANKLE]['z'] = right_ankle_pos[2]
     landmarks[PoseLandmark.RIGHT_ANKLE]['visibility'] = right_ankle_visibility
 
-    # 무릎 위치 계산 (엉덩이 높이에 연동)
+    # 무릎 위치 계산 (엉덩이 높이에 연동) - 각 다리별 길이 사용
     left_knee_pos = calculate_knee_position_by_hip_height(
         hip_coord=[landmarks[PoseLandmark.LEFT_HIP]['x'],
                    landmarks[PoseLandmark.LEFT_HIP]['y'],
                    landmarks[PoseLandmark.LEFT_HIP]['z']],
         ankle_coord=left_ankle_pos,
-        femur_length=femur_length,
-        tibia_length=tibia_length,
+        femur_length=left_femur_length,
+        tibia_length=left_tibia_length,
         femur_type=femur_type,
         side="left"
     )
@@ -108,58 +104,8 @@ def process_squat(data):
                    landmarks[PoseLandmark.RIGHT_HIP]['y'],
                    landmarks[PoseLandmark.RIGHT_HIP]['z']],
         ankle_coord=right_ankle_pos,
-        femur_length=femur_length,
-        tibia_length=tibia_length,
-        femur_type=femur_type,
-        side="right"
-    )
-
-    # 무릎 위치 업데이트
-    left_knee_visibility = landmarks[PoseLandmark.LEFT_KNEE].get('visibility', 1.0)
-    right_knee_visibility = landmarks[PoseLandmark.RIGHT_KNEE].get('visibility', 1.0)
-
-    landmarks[PoseLandmark.LEFT_KNEE]['x'] = left_knee_pos[0]
-    landmarks[PoseLandmark.LEFT_KNEE]['y'] = left_knee_pos[1]
-    landmarks[PoseLandmark.LEFT_KNEE]['z'] = left_knee_pos[2]
-    landmarks[PoseLandmark.LEFT_KNEE]['visibility'] = left_knee_visibility
-
-    landmarks[PoseLandmark.RIGHT_KNEE]['x'] = right_knee_pos[0]
-    landmarks[PoseLandmark.RIGHT_KNEE]['y'] = right_knee_pos[1]
-    landmarks[PoseLandmark.RIGHT_KNEE]['z'] = right_knee_pos[2]
-    landmarks[PoseLandmark.RIGHT_KNEE]['visibility'] = right_knee_visibility
-
-    # 업데이트된 landmarks를 data에 저장
-    data["landmarks"] = landmarks
-
-
-    landmarks[PoseLandmark.LEFT_ANKLE]['z'] = left_ankle_pos[2]
-
-    landmarks[PoseLandmark.LEFT_ANKLE]['visibility'] = left_ankle_visibility
-
-    landmarks[PoseLandmark.RIGHT_ANKLE]['x'] = right_ankle_pos[0]
-    landmarks[PoseLandmark.RIGHT_ANKLE]['y'] = right_ankle_pos[1]
-    landmarks[PoseLandmark.RIGHT_ANKLE]['z'] = right_ankle_pos[2]
-    landmarks[PoseLandmark.RIGHT_ANKLE]['visibility'] = right_ankle_visibility
-
-    # 무릎 위치 계산 (엉덩이 높이에 연동)
-    left_knee_pos = calculate_knee_position_by_hip_height(
-        hip_coord=[landmarks[PoseLandmark.LEFT_HIP]['x'],
-                   landmarks[PoseLandmark.LEFT_HIP]['y'],
-                   landmarks[PoseLandmark.LEFT_HIP]['z']],
-        ankle_coord=left_ankle_pos,
-        femur_length=femur_length,
-        tibia_length=tibia_length,
-        femur_type=femur_type,
-        side="left"
-    )
-
-    right_knee_pos = calculate_knee_position_by_hip_height(
-        hip_coord=[landmarks[PoseLandmark.RIGHT_HIP]['x'],
-                   landmarks[PoseLandmark.RIGHT_HIP]['y'],
-                   landmarks[PoseLandmark.RIGHT_HIP]['z']],
-        ankle_coord=right_ankle_pos,
-        femur_length=femur_length,
-        tibia_length=tibia_length,
+        femur_length=right_femur_length,
+        tibia_length=right_tibia_length,
         femur_type=femur_type,
         side="right"
     )
