@@ -7,7 +7,7 @@ from flask_socketio import emit, disconnect
 # AI 모델 가져오기
 from app.ai.ai_model import fall_model
 from app.controllers.user_controller import handle_data_controller
-from app.services.body_service.body_spec_service import get_body_info_for_dumbbell_shoulder_press
+from app.services.body_service.body_spec_service import get_body_info_for_dumbbell_shoulder_press, get_all_body_info, get_default_body_info
 from app.services.user_info_service import get_exercise_set, save_updated_exercise_set
 # 공유 전역 상태 가져오기
 from app.shared.global_state import (
@@ -15,7 +15,7 @@ from app.shared.global_state import (
     fall_detected,     # 추가
     is_first,          # 추가
     distances,         # 추가
-    current_user_body_type,  # 추가
+    current_user_body_type,
     client_sid,        # 추가
     press_counter,     # 추가
     reset_globals
@@ -46,7 +46,7 @@ def register_user_socket(socketio):
     # 운동 사이 쉬는 시간에도 낙상 감지
     @socketio.on('monitor_fall')
     def monitor_fall(data):
-        global is_first, distances, fall_detected, current_user_body_type, client_sid
+        global is_first, distances, fall_detected, client_sid
 
         # 현재 연결된 클라이언트의 SID 저장
         client_sid = request.sid
@@ -103,7 +103,7 @@ def register_user_socket(socketio):
 
     @socketio.on('exercise_data')
     def handle_exercise_data(data):
-        global is_first, distances, fall_detected, current_user_body_type, client_sid
+        global is_first, distances, fall_detected, current_user_body_info, client_sid
         start_time = time.perf_counter()
 
         # 현재 연결된 클라이언트의 SID 저장
@@ -117,13 +117,17 @@ def register_user_socket(socketio):
             # 첫 데이터 패킷일 때만 body_type 가져오기
             if is_first:
                 try:
-                    user_body_info = get_body_info_for_dumbbell_shoulder_press(phone_number)
-                    global current_user_body_type  # global 선언 확실히 해주기
-                    current_user_body_type = user_body_info["arm_type"]
-                    print(f'👤 첫 데이터 패킷: 사용자 body_type 설정 완료, arm_type: {current_user_body_type}')
+                    # 모든 body_type + body_data 한 번에 조회
+                    user_body_info = get_all_body_info(phone_number)
+                    
+                    # 전역 변수에 전체 저장
+                    global current_user_body_info             # body Type만 가져옴
+                    current_user_body_info = user_body_info
+                    
+                    print(f"✅ 전체 체형 정보 로드 완료: {user_body_info.keys()}")
                 except Exception as e:
-                    current_user_body_type = "AVG"  # 기본값 설정
-                    print(f"❌ body_type 가져오기 실패: {e}, 기본값 'AVG' 사용")
+                    current_user_body_info = get_default_body_info()
+                    print(f"❌ body_type 가져오기 실패: {e}, 기본값 사용")
 
             fall = False
 
@@ -223,7 +227,7 @@ def register_user_socket(socketio):
     # 클라이언트 수동 연결 해제 요청 처리
     @socketio.on('disconnect_client')
     def handle_disconnect_client(data):
-        global is_first, distances, current_user_body_type, client_sid
+        global is_first, distances,client_sid
         phone_number = data.get('phoneNumber')
         # 지금까지 한 운동 횟수
         current_count = data.get('count')
@@ -261,7 +265,6 @@ def register_user_socket(socketio):
         # 다음 세트 시작 시 다시 각 landmark 사이의 거리를 구하기 위해서 is_first 값 변경
         is_first = True
         distances = {}
-        current_user_body_type = None
 
         # 소켓 연결 끊음.
         if client_sid:

@@ -72,3 +72,60 @@ def get_body_info_for_squat(phone_number):
         "femur_length": float(body_data.femur_length),
         "hip_joint_width": float(body_data.hip_joint_width)
     }
+
+def get_all_body_info(phone_number):
+    """사용자의 모든 체형/신체 정보를 한 번에 조회"""
+    user = User.query.filter_by(phone_number=phone_number).first()
+    if not user:
+        raise Exception("❌ 사용자 없음")
+
+    body_type = BodyType.query.filter_by(user_id=user.user_id).first()
+    body_data = BodyData.query.filter_by(user_id=user.user_id).first()
+
+    if not body_type or not body_data:
+        raise Exception("❌ 체형 또는 신체 데이터 없음")
+
+    return {
+        # body_type 전체
+        "arm_type": body_type.arm_type,
+        "femur_type": body_type.femur_type,
+        "shoulder_type": body_type.shoulder_type,
+        "hip_wide_type": body_type.hip_wide_type,
+        "tibia_type": body_type.tibia_type,
+        "upper_body_type": body_type.upper_body_type,
+        "lower_body_type": body_type.lower_body_type,
+        "torso_length_type": body_type.torso_length_type,
+        
+        # body_data 전체  
+        "upper_arm_length": float(body_data.upper_arm_length),
+        "forearm_length": float(body_data.forearm_length),
+        "femur_length": float(body_data.femur_length),
+        "tibia_length": float(body_data.tibia_length),
+        "shoulder_width": float(body_data.shoulder_width),
+        "hip_joint_width": float(body_data.hip_joint_width),
+        "upper_body_length": float(body_data.upper_body_length),
+        "lower_body_length": float(body_data.lower_body_length),
+        "neck_length": float(body_data.neck_length)
+    }
+
+def get_default_body_info():
+    """기본 체형 정보 반환"""
+    return {
+        "arm_type": "AVG",
+        "femur_type": "AVG",
+        "shoulder_type": "AVG",
+        "hip_wide_type": "AVG",
+        "tibia_type": "AVG",
+        "upper_body_type": "AVG",
+        "lower_body_type": "AVG",
+        "torso_length_type": "AVG",
+        "upper_arm_length": 0.0,
+        "forearm_length": 0.0,
+        "femur_length": 0.0,
+        "tibia_length": 0.0,
+        "shoulder_width": 0.4,
+        "hip_joint_width": 0.0,
+        "upper_body_length": 0.0,
+        "lower_body_length": 0.0,
+        "neck_length": 0.0
+    }

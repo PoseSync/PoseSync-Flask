@@ -1,7 +1,6 @@
 from app.repositories.user_repository import create_user, insert_body_data, insert_body_type
 from app.models import db
 from app.models.body_type import BodyType
-from app.services.squatService.squatService import squat_count
 from app.models.user import User
 from app.models.exercise_set import ExerciseSet
 
