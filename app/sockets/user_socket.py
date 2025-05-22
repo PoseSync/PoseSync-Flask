@@ -121,7 +121,7 @@ def register_user_socket(socketio):
                     user_body_info = get_all_body_info(phone_number)
                     
                     # 전역 변수에 전체 저장
-                    global current_user_body_info
+                    global current_user_body_info             # body Type만 가져옴
                     current_user_body_info = user_body_info
                     
                     print(f"✅ 전체 체형 정보 로드 완료: {user_body_info.keys()}")
