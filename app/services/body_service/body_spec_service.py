@@ -79,7 +79,6 @@ def get_all_body_info(phone_number):
     if not user:
         raise Exception("❌ 사용자 없음")
 
-    
     body_type = BodyType.query.filter_by(user_id=user.user_id).first()
     # body_data = BodyData.query.filter_by(user_id=user.user_id).first()
     print(f'{phone_number=} 사용자의 체형정보 가져옴')
