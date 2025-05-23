@@ -12,11 +12,12 @@ from app.services.user_info_service import get_exercise_set, save_updated_exerci
 # 공유 전역 상태 가져오기
 from app.shared.global_state import (
     accel_seq_buffer,
-    fall_detected,     # 추가
-    is_first,          # 추가
+    fall_detected,
+    is_first,
     current_user_body_type,
-    client_sid,        # 추가
-    press_counter,     # 추가
+    current_user_bone_lengths,  # ✅ 추가
+    client_sid,
+    press_counter,
     reset_globals
 )
 # 가속도 계산
@@ -120,19 +121,30 @@ def register_user_socket(socketio):
                 try:
                     # 모든 body_type + body_data 한 번에 조회
                     current_user_body_type = get_all_body_info(phone_number)
-                    
-                    
+
+
                     # ✅ DB에서 뼈길이 데이터 가져오기 (필수)
                     db_bone_lengths = get_user_bone_lengths(phone_number)
                     if not db_bone_lengths:
                         raise Exception(f"DB에 뼈길이 데이터가 없습니다. 체형 분석을 먼저 진행해주세요: {phone_number}")
 
+                    # 🦴🦴🦴 뼈길이 전역변수에 저장
+                    current_user_bone_lengths = db_bone_lengths
+
                     print(f"✅ 전체 체형 정보 로드 완료: {current_user_body_type.keys()}")
-                    
+
+                    is_first = False
+
                 except Exception as e:
                     print(f"❌ 사용자 데이터 로드 실패: {e}")
                     emit('result', {'error': f'사용자 데이터 로드 실패: {str(e)}'})
                     return
+
+            if current_user_body_type and current_user_bone_lengths:
+                data['body_type'] = current_user_body_type
+                data['bone_lengths'] = current_user_bone_lengths
+            else:
+                raise Exception("체형 정보가 없습니다")
 
             fall = False
 
@@ -172,13 +184,6 @@ def register_user_socket(socketio):
             # id → name 필드 보강
             for lm in data['landmarks']:
                 lm['name'] = PoseLandmark(lm['id']).name
-
-            # ✅ DB 데이터만 사용 (실시간 측정 제거)
-            # if is_first:
-            #     print('🦴🦴🦴🦴🦴DB 뼈 길이 데이터 사용 중')
-            #     is_first = False
-
-            
 
             # requestId 추출
             request_id = data.get('requestId')

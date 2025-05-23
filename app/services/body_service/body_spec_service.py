@@ -79,8 +79,10 @@ def get_all_body_info(phone_number):
     if not user:
         raise Exception("❌ 사용자 없음")
 
+    
     body_type = BodyType.query.filter_by(user_id=user.user_id).first()
     body_data = BodyData.query.filter_by(user_id=user.user_id).first()
+    print(f'{phone_number=} 사용자의 체형정보 가져옴')
 
     if not body_type or not body_data:
         raise Exception("❌ 체형 또는 신체 데이터 없음")
@@ -100,9 +102,9 @@ def get_all_body_info(phone_number):
         "tibia_length": float(body_data.tibia_length),
         "shoulder_width": float(body_data.shoulder_width),
         "hip_joint_width": float(body_data.hip_joint_width),
-        "upper_body_length": float(body_data.upper_body_length),
-        "lower_body_length": float(body_data.lower_body_length),
-        "neck_length": float(body_data.neck_length)
+        # "upper_body_length": float(body_data.upper_body_length),
+        # "lower_body_length": float(body_data.lower_body_length),
+        # "neck_length": float(body_data.neck_length)
     }
 
 def get_default_body_info():

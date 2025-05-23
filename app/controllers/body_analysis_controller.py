@@ -35,7 +35,7 @@ def analyze_body():
         # 체형 분석 수행
         analysis_result = analyze_body_type(new_landmarks, height)
 
-        # 10개의 프레임 Landmarks 평균값 정규화
+        # N개의 프레임 Landmarks 평균값 정규화
         transformed_landmarks, transform_data = process_pose_landmarks(new_landmarks)
         for lm in transformed_landmarks:
             lm['name'] = PoseLandmark(lm['id']).name
