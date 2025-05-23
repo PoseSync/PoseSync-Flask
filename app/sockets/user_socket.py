@@ -7,27 +7,29 @@ from flask_socketio import emit, disconnect
 # AI 모델 가져오기
 from app.ai.ai_model import fall_model
 from app.controllers.user_controller import handle_data_controller
-from app.services.body_service.body_spec_service import get_body_info_for_dumbbell_shoulder_press, get_all_body_info, get_default_body_info
+from app.services.body_service.body_spec_service import get_body_info_for_dumbbell_shoulder_press, get_all_body_info
 from app.services.user_info_service import get_exercise_set, save_updated_exercise_set
 # 공유 전역 상태 가져오기
 from app.shared.global_state import (
     accel_seq_buffer,
-    fall_detected,     # 추가
-    is_first,          # 추가
-    distances,         # 추가
+    fall_detected,
+    is_first,
     current_user_body_type,
-    client_sid,        # 추가
-    press_counter,     # 추가
+    current_user_bone_lengths,  # ✅ 추가
+    client_sid,
+    press_counter,
     reset_globals
 )
 # 가속도 계산
 from app.util.calculate_landmark_accerlation import calculate_acceleration
-from app.util.calculate_landmark_distance import connections, calculate_named_linked_distances, \
-    map_distances_to_named_keys, bone_name_map
+
 # 전화 걸기
 from app.util.call import call_user
 from app.util.pose_landmark_enum import PoseLandmark  # id→공식명 enum
 from app.util.pose_transform import process_pose_landmarks, reverse_pose_landmarks
+
+# 새로 추가: DB에서 뼈길이 가져오는 함수
+from app.services.body_service.body_analysis_service import get_user_bone_lengths
 
 # 테스트 모드 전역 변수
 TEST_OFFSET_ENABLED = False  # 테스트 모드 활성화
@@ -46,7 +48,7 @@ def register_user_socket(socketio):
     # 운동 사이 쉬는 시간에도 낙상 감지
     @socketio.on('monitor_fall')
     def monitor_fall(data):
-        global is_first, distances, fall_detected, client_sid
+        global is_first, fall_detected, client_sid
 
         # 현재 연결된 클라이언트의 SID 저장
         client_sid = request.sid
@@ -103,7 +105,7 @@ def register_user_socket(socketio):
 
     @socketio.on('exercise_data')
     def handle_exercise_data(data):
-        global is_first, distances, fall_detected, current_user_body_info, client_sid
+        global is_first, fall_detected, current_user_body_type, current_user_bone_lengths, client_sid
         start_time = time.perf_counter()
 
         # 현재 연결된 클라이언트의 SID 저장
@@ -114,20 +116,35 @@ def register_user_socket(socketio):
             landmarks = data.get('landmarks', [])
             phone_number = data.get('phoneNumber')
 
-            # 첫 데이터 패킷일 때만 body_type 가져오기
+            # 첫 데이터 패킷일 때만 body_type과 뼈길이 데이터 가져오기
             if is_first:
                 try:
                     # 모든 body_type + body_data 한 번에 조회
-                    user_body_info = get_all_body_info(phone_number)
-                    
-                    # 전역 변수에 전체 저장
-                    global current_user_body_info             # body Type만 가져옴
-                    current_user_body_info = user_body_info
-                    
-                    print(f"✅ 전체 체형 정보 로드 완료: {user_body_info.keys()}")
+                    current_user_body_type = get_all_body_info(phone_number)
+
+
+                    # ✅ DB에서 뼈길이 데이터 가져오기 (필수)
+                    db_bone_lengths = get_user_bone_lengths(phone_number)
+                    if not db_bone_lengths:
+                        raise Exception(f"DB에 뼈길이 데이터가 없습니다. 체형 분석을 먼저 진행해주세요: {phone_number}")
+
+                    # 🦴🦴🦴 뼈길이 전역변수에 저장
+                    current_user_bone_lengths = db_bone_lengths
+
+                    print(f"✅ 전체 체형 정보 로드 완료: {current_user_body_type.keys()}")
+
+                    is_first = False
+
                 except Exception as e:
-                    current_user_body_info = get_default_body_info()
-                    print(f"❌ body_type 가져오기 실패: {e}, 기본값 사용")
+                    print(f"❌ 사용자 데이터 로드 실패: {e}")
+                    emit('result', {'error': f'사용자 데이터 로드 실패: {str(e)}'})
+                    return
+
+            if current_user_body_type and current_user_bone_lengths:
+                data['body_type'] = current_user_body_type
+                data['bone_lengths'] = current_user_bone_lengths
+            else:
+                raise Exception("체형 정보가 없습니다")
 
             fall = False
 
@@ -168,18 +185,6 @@ def register_user_socket(socketio):
             for lm in data['landmarks']:
                 lm['name'] = PoseLandmark(lm['id']).name
 
-            # 첫프레임 or 뼈 길이 없는경우 ->  뼈 길이 계산 및 이동 평균 적용 (프레임 간 변동 감소)
-            if not distances:
-                current_distances = calculate_named_linked_distances(data['landmarks'], connections)
-                current_distances = map_distances_to_named_keys(current_distances, bone_name_map)
-                distances = current_distances
-                print('🦴🦴🦴🦴🦴뼈 길이 측정 완료')
-                print(f"뼈 길이 : {distances}")
-                is_first = False  # 첫 프레임 처리 완료
-
-            # 서버 내부에서 사용할 수 있도록 뼈 길이 데이터 추가
-            data["bone_lengths"] = distances
-
             # requestId 추출
             request_id = data.get('requestId')
 
@@ -212,7 +217,6 @@ def register_user_socket(socketio):
             # 클라이언트에서 사용하지 않는 데이터 바로 삭제
             del result['landmarks']  # 원본 변환 랜드마크 제거 (네트워크 부하 감소)
             del result['__transformData']  # 변환 데이터 삭제
-            del result['bone_lengths']  # 뼈 길이 데이터 삭제
 
             # 결과 전송
             print(f'클라이언트에게 전송 => {result}')
@@ -227,7 +231,7 @@ def register_user_socket(socketio):
     # 클라이언트 수동 연결 해제 요청 처리
     @socketio.on('disconnect_client')
     def handle_disconnect_client(data):
-        global is_first, distances,client_sid
+        global is_first,client_sid
         phone_number = data.get('phoneNumber')
         # 지금까지 한 운동 횟수
         current_count = data.get('count')
@@ -264,7 +268,6 @@ def register_user_socket(socketio):
 
         # 다음 세트 시작 시 다시 각 landmark 사이의 거리를 구하기 위해서 is_first 값 변경
         is_first = True
-        distances = {}
 
         # 소켓 연결 끊음.
         if client_sid:

@@ -87,8 +87,9 @@ def save_body_analysis_result(phone_number, analysis_result):
         # 체형 정보 업데이트
         body_type.arm_type = db_types.get('arm_type', 'AVG')
         body_type.femur_type = db_types.get('femur_type', 'AVG')
-        body_type.upper_lower_body_type = db_types.get('upper_body_type', 'AVG')
+        body_type.shoulder_type = db_types.get('shoulder_type', 'AVG')
         body_type.hip_wide_type = db_types.get('hip_wide_type', 'AVG')
+        body_type.upper_lower_body_type = db_types.get('upper_lower_body_type', 'AVG')
         
         # DB에 저장
         db.session.add(body_type)
@@ -101,3 +102,50 @@ def save_body_analysis_result(phone_number, analysis_result):
         db.session.rollback()
         print(f"체형 분석 결과 저장 중 오류: {e}")
         return False
+
+def get_user_bone_lengths(phone_number: str) -> dict:
+    """
+    사용자의 DB에 저장된 뼈길이 데이터를 가져와서 
+    exercise_data에서 사용하는 형식으로 변환하여 반환
+    """
+    try:
+        # phone_number → user_id 조회
+        user = User.query.filter_by(phone_number=phone_number).first()
+        if not user:
+            print(f"❌ 사용자를 찾을 수 없음: {phone_number}")
+            return None
+
+        # BodyData 조회
+        body_data = BodyData.query.filter_by(user_id=user.user_id).first()
+        if not body_data:
+            print(f"❌ 사용자의 신체 데이터가 없음: {phone_number}")
+            return None
+
+        # exercise_data에서 사용하는 형식으로 변환
+        bone_lengths = {
+            "shoulder_width": float(body_data.shoulder_width),
+            "hip_width": float(body_data.hip_joint_width),
+            
+            "left_upper_arm_length": float(body_data.upper_arm_length),
+            "left_forearm_length": float(body_data.forearm_length),
+            
+            "right_upper_arm_length": float(body_data.upper_arm_length),
+            "right_forearm_length": float(body_data.forearm_length),
+            
+            "left_thigh_length": float(body_data.femur_length),
+            "left_calf_length": float(body_data.tibia_length),
+            
+            "right_thigh_length": float(body_data.femur_length),
+            "right_calf_length": float(body_data.tibia_length)
+        }
+        
+        # 모든 값이 0이 아닌지 확인
+        if all(value == 0.0 for value in bone_lengths.values()):
+            print(f"⚠️ 모든 뼈길이 데이터가 0임: {phone_number}")
+            return None
+            
+        return bone_lengths
+        
+    except Exception as e:
+        print(f"❌ DB 뼈길이 데이터 조회 중 오류: {e}")
+        return None

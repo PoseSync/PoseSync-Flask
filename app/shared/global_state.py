@@ -10,8 +10,8 @@ accel_seq_buffer = deque(maxlen=30)
 # 상태 관리 전역 변수
 fall_detected = False
 is_first = True  # 현재 클라이언트로 전달받은 데이터가 맨 처음 데이터인지 확인
-distances = {}  # 유저의 각 landmark 사이의 거리
-current_user_body_type = None  # 추가: 전체 체형 정보를 저장할 변수
+current_user_body_type = None
+current_user_bone_lengths = None  # ✅ 새로 추가
 client_sid = None  # 현재 연결된 클라이언트의 세션 ID
 
 # 운동 카운터 인스턴스 - 전역으로 관리
@@ -35,7 +35,7 @@ def init_counters():
 
 # 전역변수 초기화 함수
 def reset_globals():
-    global accel_seq_buffer, fall_detected, is_first, distances, current_user_body_type, client_sid, press_counter
+    global accel_seq_buffer, fall_detected, is_first, distances, current_user_body_type, current_user_bone_lengths, client_sid, press_counter
 
     # 시퀀스 버퍼 초기화
     accel_seq_buffer.clear()
@@ -46,11 +46,11 @@ def reset_globals():
     # 첫 프레임 여부 초기화
     is_first = True
 
-    # 뼈 길이 초기화
-    distances = {}
 
-    # 추가: 전체 체형 정보 초기화
+
+    # 사용자 정보 초기화
     current_user_body_type = None
+    current_user_bone_lengths = None  # ✅ 새로 추가
 
     print(f'현재 개수 : {press_counter.count}')
 

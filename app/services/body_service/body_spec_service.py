@@ -80,9 +80,10 @@ def get_all_body_info(phone_number):
         raise Exception("❌ 사용자 없음")
 
     body_type = BodyType.query.filter_by(user_id=user.user_id).first()
-    body_data = BodyData.query.filter_by(user_id=user.user_id).first()
+    # body_data = BodyData.query.filter_by(user_id=user.user_id).first()
+    print(f'{phone_number=} 사용자의 체형정보 가져옴')
 
-    if not body_type or not body_data:
+    if not body_type:
         raise Exception("❌ 체형 또는 신체 데이터 없음")
 
     return {
@@ -91,21 +92,18 @@ def get_all_body_info(phone_number):
         "femur_type": body_type.femur_type,
         "shoulder_type": body_type.shoulder_type,
         "hip_wide_type": body_type.hip_wide_type,
-        "tibia_type": body_type.tibia_type,
-        "upper_body_type": body_type.upper_body_type,
-        "lower_body_type": body_type.lower_body_type,
-        "torso_length_type": body_type.torso_length_type,
+        "upper_lower_body_type": body_type.upper_lower_body_type,
         
         # body_data 전체  
-        "upper_arm_length": float(body_data.upper_arm_length),
-        "forearm_length": float(body_data.forearm_length),
-        "femur_length": float(body_data.femur_length),
-        "tibia_length": float(body_data.tibia_length),
-        "shoulder_width": float(body_data.shoulder_width),
-        "hip_joint_width": float(body_data.hip_joint_width),
-        "upper_body_length": float(body_data.upper_body_length),
-        "lower_body_length": float(body_data.lower_body_length),
-        "neck_length": float(body_data.neck_length)
+        # "upper_arm_length": float(body_data.upper_arm_length),
+        # "forearm_length": float(body_data.forearm_length),
+        # "femur_length": float(body_data.femur_length),
+        # "tibia_length": float(body_data.tibia_length),
+        # "shoulder_width": float(body_data.shoulder_width),
+        # "hip_joint_width": float(body_data.hip_joint_width),
+        # "upper_body_length": float(body_data.upper_body_length),
+        # "lower_body_length": float(body_data.lower_body_length),
+        # "neck_length": float(body_data.neck_length)
     }
 
 def get_default_body_info():
@@ -115,10 +113,7 @@ def get_default_body_info():
         "femur_type": "AVG",
         "shoulder_type": "AVG",
         "hip_wide_type": "AVG",
-        "tibia_type": "AVG",
-        "upper_body_type": "AVG",
-        "lower_body_type": "AVG",
-        "torso_length_type": "AVG",
+        "upper_lower_body_type": "AVG",
         "upper_arm_length": 0.0,
         "forearm_length": 0.0,
         "femur_length": 0.0,
