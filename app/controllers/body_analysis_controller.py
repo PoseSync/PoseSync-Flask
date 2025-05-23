@@ -32,7 +32,6 @@ def analyze_body():
         print('❌❌❌ 여기까지됨')
         new_landmarks = average_landmarks(landmarks)
 
-        print('3. 여기까지됨')
         # 체형 분석 수행
         analysis_result = analyze_body_type(new_landmarks, height)
 
@@ -40,11 +39,11 @@ def analyze_body():
         transformed_landmarks, transform_data = process_pose_landmarks(new_landmarks)
         for lm in transformed_landmarks:
             lm['name'] = PoseLandmark(lm['id']).name
-        print('4. 여기까지됨')
+
         current_distances = calculate_named_linked_distances(transformed_landmarks, connections)
         current_distances = map_distances_to_named_keys(current_distances, bone_name_map)
         distances = current_distances
-        print('5. 여기까지됨')
+
         # 결과 DB에 저장 (전화번호가 있는 경우)
         if phone_number:
             save_success = save_body_analysis_result(phone_number, analysis_result)
