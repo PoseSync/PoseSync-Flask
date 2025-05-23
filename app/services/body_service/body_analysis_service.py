@@ -87,8 +87,9 @@ def save_body_analysis_result(phone_number, analysis_result):
         # 체형 정보 업데이트
         body_type.arm_type = db_types.get('arm_type', 'AVG')
         body_type.femur_type = db_types.get('femur_type', 'AVG')
-        body_type.upper_lower_body_type = db_types.get('upper_body_type', 'AVG')
+        body_type.shoulder_type = db_types.get('shoulder_type', 'AVG')
         body_type.hip_wide_type = db_types.get('hip_wide_type', 'AVG')
+        body_type.upper_lower_body_type = db_types.get('upper_lower_body_type', 'AVG')
         
         # DB에 저장
         db.session.add(body_type)

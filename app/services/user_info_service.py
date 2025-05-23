@@ -141,24 +141,18 @@ def save_user_and_body_data_and_body_type(data):
         # body_type 저장 로직 시작
         arm_type = calculate_arm_type(body_data)
         femur_type = calculate_femur_type(body_data)
-        upper_body_type = calculate_upper_body_type(body_data)
-        tibia_type = calculate_tibia_type(body_data)
         shoulder_type = calculate_shoulder_type(body_data)
         hip_wide_type = calculate_hip_wide_type(body_data)
-        lower_body_type = calculate_lower_body_type(body_data)
-        torso_length_type = calculate_torso_length_type(body_data)
+        upper_lower_body_type = calculate_upper_lower_body_type(body_data)
 
         # BodyType 객체 생성
         body_type = BodyType(
             user_id=user.user_id,
             arm_type=arm_type,
             femur_type=femur_type,
-            tibia_type=tibia_type,
             shoulder_type=shoulder_type,
             hip_wide_type=hip_wide_type,
-            upper_body_type=upper_body_type,
-            lower_body_type=lower_body_type,
-            torso_length_type=torso_length_type
+            upper_lower_body_type=upper_lower_body_type
         )
 
         insert_body_type(body_type)
@@ -170,27 +164,6 @@ def save_user_and_body_data_and_body_type(data):
         db.session.rollback()
         raise e
 
-def calculate_torso_length_type(body_data):
-    upper_body_length = body_data.upper_body_length
-    lower_body_length = body_data.lower_body_length
-    ratio = round(upper_body_length / lower_body_length, 2)
-    if ratio >= 1.0:
-        return 'LONG'
-    elif ratio <= 0.89:
-        return 'SHORT'
-    else:
-        return 'AVG'
-
-def calculate_lower_body_type(body_data):
-    lower_body_length = body_data.lower_body_length
-    height = body_data.height
-    ratio = round(lower_body_length / height, 2)
-    if ratio >= 0.55:
-        return 'LONG'
-    elif ratio <= 0.49:
-        return 'SHORT'
-    else:
-        return 'AVG'
 
 def calculate_hip_wide_type(body_data):
     hip_joint_width = body_data.hip_joint_width
@@ -211,28 +184,6 @@ def calculate_shoulder_type(body_data):
         return 'WIDE'
     elif ratio <= 0.22:
         return 'NARROW'
-    else:
-        return 'AVG'
-
-def calculate_tibia_type(body_data):
-    tibia_length = body_data.tibia_length
-    height = body_data.height
-    ratio = round(tibia_length / height, 2)
-    if ratio >= 0.26:
-        return 'LONG'
-    elif ratio <= 0.22:
-        return 'SHORT'
-    else:
-        return 'AVG'
-
-def calculate_upper_body_type(body_data):
-    upper_body_length = body_data.upper_body_length
-    lower_body_length = body_data.lower_body_length
-    ratio = round(upper_body_length / lower_body_length, 2)
-    if ratio >= 1.0:
-        return 'LONG'
-    elif ratio <= 0.89:
-        return 'SHORT'
     else:
         return 'AVG'
 
@@ -257,3 +208,14 @@ def calculate_femur_type(body_data):
         return "SHORT"
     else:
         return "AVG"
+
+def calculate_upper_lower_body_type(body_data):
+    upper_body_length = body_data.upper_body_length
+    lower_body_length = body_data.lower_body_length
+    ratio = round(upper_body_length / lower_body_length, 2)
+    if ratio >= 1.0:
+        return 'LONG'
+    elif ratio <= 0.89:
+        return 'SHORT'
+    else:
+        return 'AVG'

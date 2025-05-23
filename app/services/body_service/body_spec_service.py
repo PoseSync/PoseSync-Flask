@@ -91,10 +91,7 @@ def get_all_body_info(phone_number):
         "femur_type": body_type.femur_type,
         "shoulder_type": body_type.shoulder_type,
         "hip_wide_type": body_type.hip_wide_type,
-        "tibia_type": body_type.tibia_type,
-        "upper_body_type": body_type.upper_body_type,
-        "lower_body_type": body_type.lower_body_type,
-        "torso_length_type": body_type.torso_length_type,
+        "upper_lower_body_type": body_type.upper_lower_body_type,
         
         # body_data 전체  
         "upper_arm_length": float(body_data.upper_arm_length),
@@ -115,10 +112,7 @@ def get_default_body_info():
         "femur_type": "AVG",
         "shoulder_type": "AVG",
         "hip_wide_type": "AVG",
-        "tibia_type": "AVG",
-        "upper_body_type": "AVG",
-        "lower_body_type": "AVG",
-        "torso_length_type": "AVG",
+        "upper_lower_body_type": "AVG",
         "upper_arm_length": 0.0,
         "forearm_length": 0.0,
         "femur_length": 0.0,
