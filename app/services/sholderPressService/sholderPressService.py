@@ -3,19 +3,26 @@ import numpy as np
 from app.util.pose_landmark_enum import PoseLandmark
 from app.util.exercise_util.shoulderPress_util import calculate_elbow_position_by_forward_angle, \
     adjust_wrist_direction_to_preserve_min_angle
-# 공유 전역 상태에서 body_type과 카운터 가져오기
-from app.shared.global_state import press_counter, current_user_body_type
+# 공유 전역 상태에서 body_type과 뼈길이 데이터 가져오기
+from app.shared.global_state import press_counter, current_user_body_type, current_user_bone_lengths
 
 
 def process_dumbbell_shoulderPress(data):
     landmarks = data.get("landmarks", [])
 
-    bone_lengths = data.get("bone_lengths", {})  # 첫 exercise_date 패킷 연결에서 계산한 뼈 길이
+    # ✅ 전역변수에서 직접 사용
+    if not current_user_bone_lengths:
+        raise Exception("사용자 뼈길이 정보가 없습니다. 체형 분석을 먼저 진행해주세요.")
 
-    # landmarks = landmark_stabilizer.stabilize_landmarks(landmarks, dead_zone=0.2)
+    # landmarks = landmark_stabilizer.stabilize_landmarks(landmarks, dead_zone=0.2) # 안정화는 클라이언트에서 적용해서 전달받음
 
-    # 안정화는 소켓 레벨에서 이미 적용되었으므로 여기서는 제거
-    arm_type = current_user_body_type.get("arm_type", "AVG") if current_user_body_type else "AVG"
+    if not current_user_body_type:
+        raise Exception("사용자 체형 정보가 없습니다. 체형 분석을 먼저 진행해주세요.")
+    
+    if "arm_type" not in current_user_body_type or not current_user_body_type["arm_type"]:
+        raise Exception("사용자 상완 타입 정보가 없습니다. 체형 분석을 먼저 진행해주세요.")
+    
+    arm_type = current_user_body_type["arm_type"]
 
 
     # 어깨좌표 [0] : 왼쪽 [1] : 오른쪽
@@ -66,9 +73,9 @@ def process_dumbbell_shoulderPress(data):
         shoulder = shoulders_coord[side]
         elbow_y = elbows_coord[side]['y']  # 현재 팔꿈치 높이 유지
 
-        # 각 팔에 맞는 길이 사용 (side_label 활용)
-        current_upper_arm_length = bone_lengths[f"{side_label}_upper_arm_length"]
-        current_forearm_length = bone_lengths[f"{side_label}_forearm_length"]
+        # ✅ 전역변수에서 뼈길이 사용
+        current_upper_arm_length = current_user_bone_lengths[f"{side_label}_upper_arm_length"]
+        current_forearm_length = current_user_bone_lengths[f"{side_label}_forearm_length"]
 
 
         # print(f"{side_label} upper arm length: {current_upper_arm_length}")

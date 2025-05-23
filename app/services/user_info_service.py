@@ -6,11 +6,22 @@ from app.models.exercise_set import ExerciseSet
 
 # 전화번호로 User를 조회해서 height 반환하는 함수
 def get_height_service(phone_number):
-    user = User.query.filter_by(phone_number=phone_number).first()
-    if not user:
-        raise ValueError("User not found")
+    print(f'get_height_service 호출됨 - 전화번호: {phone_number}')
 
-    return user.height
+    try:
+        user = User.query.filter_by(phone_number=phone_number).first()
+        print(f'사용자 조회 결과: {user}')
+
+        if not user:
+            print(f'❌ 사용자를 찾을 수 없음: {phone_number}')
+            raise ValueError(f"User not found: {phone_number}")
+
+        print(f'사용자 키: {user.height}')
+        return user.height
+
+    except Exception as e:
+        print(f'❌ get_height_service 예외: {e}')
+        raise e
 
 
 def get_exercise_set_service(phone_number):

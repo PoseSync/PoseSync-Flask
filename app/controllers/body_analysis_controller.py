@@ -18,16 +18,21 @@ def analyze_body():
         landmarks = data.get('landmarks', [])
         # 전화번호
         phone_number = data.get('phoneNumber')
-        
+
+        print('1. 여기까지됨')
+
         # 필수 입력값 검증
         if not landmarks:
             return jsonify({"success": False, "error": "랜드마크 데이터가 없습니다"}), 400
-        
+        print('2. 여기까지됨')
+
         # 전화번호로 User의 키 GET
         height = float(get_height_service(phone_number=phone_number))
         # 10개의 프레임들의 평균값을 갖는 새로운 landmarks 리스트 생성
+        print('❌❌❌ 여기까지됨')
         new_landmarks = average_landmarks(landmarks)
-        
+
+        print('3. 여기까지됨')
         # 체형 분석 수행
         analysis_result = analyze_body_type(new_landmarks, height)
 
@@ -35,11 +40,11 @@ def analyze_body():
         transformed_landmarks, transform_data = process_pose_landmarks(new_landmarks)
         for lm in transformed_landmarks:
             lm['name'] = PoseLandmark(lm['id']).name
-        
+        print('4. 여기까지됨')
         current_distances = calculate_named_linked_distances(transformed_landmarks, connections)
         current_distances = map_distances_to_named_keys(current_distances, bone_name_map)
         distances = current_distances
-        
+        print('5. 여기까지됨')
         # 결과 DB에 저장 (전화번호가 있는 경우)
         if phone_number:
             save_success = save_body_analysis_result(phone_number, analysis_result)
@@ -81,12 +86,12 @@ def average_landmarks(landmarks_sequence):
                 "y": coord_sum[lm_id]["y"] / count,
                 "z": coord_sum[lm_id]["z"] / count,
             })
-        else:
-            result.append({
-                "id": lm_id,
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-            })
+        # else:
+        #     result.append({
+        #         "id": lm_id,
+        #         "x": 0.0,
+        #         "y": 0.0,
+        #         "z": 0.0,
+        #     })
 
     return result
