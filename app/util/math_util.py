@@ -8,23 +8,23 @@ def normalize_vector(v):
     return v / norm if norm != 0 else v
 
 
-#두 벡터사이 각도를 degree 단위로 반환
-def vector_angle_deg(v1: np.ndarray, v2: np.ndarray) -> float:
-    """
-    두 벡터 v1, v2 사이의 각도를 degree 단위로 반환
-    """
-    # v1 벡터 정규화 (길이를 1로 만든 방향벡터)
-    v1_norm = v1 / np.linalg.norm(v1) if np.linalg.norm(v1) != 0 else v1
-    # v2 벡터 정규화
-    v2_norm = v2 / np.linalg.norm(v2) if np.linalg.norm(v2) != 0 else v2
-    # 두 벡터의 내적 계산
-    dot = np.dot(v1_norm, v2_norm)
-    # arccos 계산 오류 방지를 위해 -1.0 ~ 1.0 사이로 클리핑
-    dot = np.clip(dot, -1.0, 1.0)
-    # 내적의 arccos를 통해 두 벡터 사이의 라디안 각도 구함
-    angle_rad = np.arccos(dot)
-    # 라디안 → degree 변환 후 반환
-    return np.degrees(angle_rad)
+#두 벡터사이 각도를 degree 단위로 반환 ❌ 중복정의
+# def vector_angle_deg(v1: np.ndarray, v2: np.ndarray) -> float:
+#     """
+#     두 벡터 v1, v2 사이의 각도를 degree 단위로 반환
+#     """
+#     # v1 벡터 정규화 (길이를 1로 만든 방향벡터)
+#     v1_norm = v1 / np.linalg.norm(v1) if np.linalg.norm(v1) != 0 else v1
+#     # v2 벡터 정규화
+#     v2_norm = v2 / np.linalg.norm(v2) if np.linalg.norm(v2) != 0 else v2
+#     # 두 벡터의 내적 계산
+#     dot = np.dot(v1_norm, v2_norm)
+#     # arccos 계산 오류 방지를 위해 -1.0 ~ 1.0 사이로 클리핑
+#     dot = np.clip(dot, -1.0, 1.0)
+#     # 내적의 arccos를 통해 두 벡터 사이의 라디안 각도 구함
+#     angle_rad = np.arccos(dot)
+#     # 라디안 → degree 변환 후 반환
+#     return np.degrees(angle_rad)
 
 
 
