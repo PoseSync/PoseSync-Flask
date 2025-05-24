@@ -76,6 +76,9 @@ def get_exercise_set(phone_number):
     # 가장 최근 1개
     exercise_set = ExerciseSet.query.filter_by(user_id=user.user_id, is_finished=False).order_by(ExerciseSet.created_at.desc()).first()
 
+    if not exercise_set:
+        raise ValueError("No exercise sets found")
+
     return exercise_set
 
 def is_user_exist(data):

@@ -81,9 +81,9 @@ def process_dumbbell_shoulderPress(data):
         # 🟥 팔꿈치 위치 계산 (전방 외각 유지)
         elbow_pos = calculate_elbow_position_by_forward_angle(
             shoulder_coord=[shoulder['x'], shoulder['y'], shoulder['z']],
+            current_elbow_coord=[elbows_coord[side]['x'], elbows_coord[side]['y'], elbows_coord[side]['z']],
             arm_type=arm_type,
             upper_arm_length=current_upper_arm_length,
-            elbow_y=elbow_y,
             side=side_label  # side_label을 그대로 전달
         )
 

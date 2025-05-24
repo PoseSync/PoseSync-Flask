@@ -75,13 +75,14 @@ def get_body_info_for_squat(phone_number):
 
 def get_all_body_info(phone_number):
     """사용자의 모든 체형/신체 정보를 한 번에 조회"""
+
     user = User.query.filter_by(phone_number=phone_number).first()
+
     if not user:
         raise Exception("❌ 사용자 없음")
 
     body_type = BodyType.query.filter_by(user_id=user.user_id).first()
     # body_data = BodyData.query.filter_by(user_id=user.user_id).first()
-    print(f'{phone_number=} 사용자의 체형정보 가져옴')
 
     if not body_type:
         raise Exception("❌ 체형 또는 신체 데이터 없음")
