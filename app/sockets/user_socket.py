@@ -15,10 +15,10 @@ from app.shared.global_state import (
     fall_detected,
     is_first,
     current_user_body_type,
-    current_user_bone_lengths,  # ✅ 추가
+    current_user_bone_lengths,
     client_sid,
-    press_counter,
-    reset_globals
+    counter,
+    reset_globals, initialize_exercise_counter
 )
 # 가속도 계산
 from app.util.calculate_landmark_accerlation import calculate_acceleration
@@ -115,6 +115,8 @@ def register_user_socket(socketio):
             # 클라이언트에서 받은 원본 랜드마크 데이터
             landmarks = data.get('landmarks', [])
             phone_number = data.get('phoneNumber')
+            exercise_type = data.get('exerciseType')
+            initialize_exercise_counter(exercise_type) # 운동 카운터 초기화
 
             # 첫 데이터 패킷일 때만 body_type과 뼈길이 데이터 가져오기
             if is_first:
@@ -200,13 +202,9 @@ def register_user_socket(socketio):
             # 시각화용 랜드마크 추가하고 원본 제거
             result['visualizationLandmarks'] = visualization_landmarks
 
-            # print('⭕')
-
             # 레이턴시 측정
             elapsed_ms = (time.perf_counter() - start_time) * 1000
             result['latency'] = round(elapsed_ms, 2)
-
-            # print('♥❌')
 
             # 중요: requestId를 결과에 포함
             result['requestId'] = request_id

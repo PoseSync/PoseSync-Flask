@@ -4,7 +4,7 @@ from app.util.pose_landmark_enum import PoseLandmark
 from app.util.exercise_util.shoulderPress_util import calculate_elbow_position_by_forward_angle, \
     adjust_wrist_direction_to_preserve_min_angle
 # 공유 전역 상태에서 body_type과 뼈길이 데이터 가져오기
-from app.shared.global_state import press_counter
+from app.shared.global_state import counter
 
 
 def process_dumbbell_shoulderPress(data):
@@ -140,18 +140,18 @@ def process_dumbbell_shoulderPress(data):
 
     # 운동 한 회가 완료되면 카운트 증가 --------------------------------------
     # press_counter가 None이 아닌 경우에만 카운팅 로직 실행
-    if press_counter:
+    if counter:
         # 왼팔 기준으로 운동 횟수 업데이트
-        completed = press_counter.update(landmarks)
+        completed = counter.update(landmarks)
 
         # 운동 한 회가 완료되면 카운트 증가
         if completed:
-            count = press_counter.count
+            count = counter.count
             print(f"✅ 운동 횟수 변경: {count}회")
             data["count"] = count
         elif "count" not in data:
             # 이전 카운트 값이 없으면 현재 카운트 추가
-            data["count"] = press_counter.count
+            data["count"] = counter.count
         # 운동 한 회가 완료되면 카운트 증가 ------------------------------------
 
 
