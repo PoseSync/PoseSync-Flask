@@ -5,7 +5,8 @@ from app.util.exercise_util.barbell_curl_util import (
     calculate_wrist_position_for_barbell_curl,
     create_symmetric_arm_positions
 )
-from app.shared.global_state import curl_counter
+import app.shared.global_state as global_state
+
 
 
 def process_barbell_curl(data):
@@ -100,17 +101,17 @@ def process_barbell_curl(data):
     landmarks[PoseLandmark.LEFT_WRIST]['z'] = left_wrist_pos[2]
     landmarks[PoseLandmark.LEFT_WRIST]['visibility'] = left_wrist_visibility
 
-    # 5. 운동 횟수 카운팅 (curl_counter가 있는 경우)
-    if curl_counter:
+    # 5. 운동 횟수 카운팅 (counter가 있는 경우)
+    if global_state.counter:
         # 오른팔 기준으로 카운팅
-        completed = curl_counter.update(landmarks)
+        completed = global_state.counter.update(landmarks)
 
         if completed:
-            count = curl_counter.count
+            count = global_state. counter.count
             print(f"✅ 바벨컬 횟수: {count}회")
             data["count"] = count
         elif "count" not in data:
-            data["count"] = curl_counter.count
+            data["count"] = global_state.counter.count
 
     # 수정된 landmarks를 data에 저장
     data["landmarks"] = landmarks
