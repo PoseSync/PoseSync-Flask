@@ -1,5 +1,4 @@
 import math
-from app.util.pose_landmark_enum import PoseLandmark  # PoseLandmark Enum 불러오기
 
 # 1. 이름 기반 connections
 connections = {

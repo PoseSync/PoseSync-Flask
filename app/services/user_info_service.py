@@ -1,17 +1,27 @@
 from app.repositories.user_repository import create_user, insert_body_data, insert_body_type
 from app.models import db
 from app.models.body_type import BodyType
-from app.services.squatService.squatService import squat_count
 from app.models.user import User
 from app.models.exercise_set import ExerciseSet
 
 # 전화번호로 User를 조회해서 height 반환하는 함수
 def get_height_service(phone_number):
-    user = User.query.filter_by(phone_number=phone_number).first()
-    if not user:
-        raise ValueError("User not found")
+    print(f'get_height_service 호출됨 - 전화번호: {phone_number}')
 
-    return user.height
+    try:
+        user = User.query.filter_by(phone_number=phone_number).first()
+        print(f'사용자 조회 결과: {user}')
+
+        if not user:
+            print(f'❌ 사용자를 찾을 수 없음: {phone_number}')
+            raise ValueError(f"User not found: {phone_number}")
+
+        print(f'사용자 키: {user.height}')
+        return user.height
+
+    except Exception as e:
+        print(f'❌ get_height_service 예외: {e}')
+        raise e
 
 
 def get_exercise_set_service(phone_number):
@@ -66,7 +76,17 @@ def get_exercise_set(phone_number):
     # 가장 최근 1개
     exercise_set = ExerciseSet.query.filter_by(user_id=user.user_id, is_finished=False).order_by(ExerciseSet.created_at.desc()).first()
 
+    if not exercise_set:
+        raise ValueError("No exercise sets found")
+
     return exercise_set
+
+def is_user_exist(data):
+    phone_number = data.get('phoneNumber')
+
+    user = User.query.filter_by(phone_number=phone_number).first()
+    if user:
+        return user
 
 # 운동 세트 정보 저장
 def save_exercise_set_service(data, user, routine_group):
@@ -124,24 +144,18 @@ def save_user_and_body_data_and_body_type(data):
         # body_type 저장 로직 시작
         arm_type = calculate_arm_type(body_data)
         femur_type = calculate_femur_type(body_data)
-        upper_body_type = calculate_upper_body_type(body_data)
-        tibia_type = calculate_tibia_type(body_data)
         shoulder_type = calculate_shoulder_type(body_data)
         hip_wide_type = calculate_hip_wide_type(body_data)
-        lower_body_type = calculate_lower_body_type(body_data)
-        torso_length_type = calculate_torso_length_type(body_data)
+        upper_lower_body_type = calculate_upper_lower_body_type(body_data)
 
         # BodyType 객체 생성
         body_type = BodyType(
             user_id=user.user_id,
             arm_type=arm_type,
             femur_type=femur_type,
-            tibia_type=tibia_type,
             shoulder_type=shoulder_type,
             hip_wide_type=hip_wide_type,
-            upper_body_type=upper_body_type,
-            lower_body_type=lower_body_type,
-            torso_length_type=torso_length_type
+            upper_lower_body_type=upper_lower_body_type
         )
 
         insert_body_type(body_type)
@@ -153,27 +167,6 @@ def save_user_and_body_data_and_body_type(data):
         db.session.rollback()
         raise e
 
-def calculate_torso_length_type(body_data):
-    upper_body_length = body_data.upper_body_length
-    lower_body_length = body_data.lower_body_length
-    ratio = round(upper_body_length / lower_body_length, 2)
-    if ratio >= 1.0:
-        return 'LONG'
-    elif ratio <= 0.89:
-        return 'SHORT'
-    else:
-        return 'AVG'
-
-def calculate_lower_body_type(body_data):
-    lower_body_length = body_data.lower_body_length
-    height = body_data.height
-    ratio = round(lower_body_length / height, 2)
-    if ratio >= 0.55:
-        return 'LONG'
-    elif ratio <= 0.49:
-        return 'SHORT'
-    else:
-        return 'AVG'
 
 def calculate_hip_wide_type(body_data):
     hip_joint_width = body_data.hip_joint_width
@@ -194,28 +187,6 @@ def calculate_shoulder_type(body_data):
         return 'WIDE'
     elif ratio <= 0.22:
         return 'NARROW'
-    else:
-        return 'AVG'
-
-def calculate_tibia_type(body_data):
-    tibia_length = body_data.tibia_length
-    height = body_data.height
-    ratio = round(tibia_length / height, 2)
-    if ratio >= 0.26:
-        return 'LONG'
-    elif ratio <= 0.22:
-        return 'SHORT'
-    else:
-        return 'AVG'
-
-def calculate_upper_body_type(body_data):
-    upper_body_length = body_data.upper_body_length
-    lower_body_length = body_data.lower_body_length
-    ratio = round(upper_body_length / lower_body_length, 2)
-    if ratio >= 1.0:
-        return 'LONG'
-    elif ratio <= 0.89:
-        return 'SHORT'
     else:
         return 'AVG'
 
@@ -240,3 +211,14 @@ def calculate_femur_type(body_data):
         return "SHORT"
     else:
         return "AVG"
+
+def calculate_upper_lower_body_type(body_data):
+    upper_body_length = body_data.upper_body_length
+    lower_body_length = body_data.lower_body_length
+    ratio = round(upper_body_length / lower_body_length, 2)
+    if ratio >= 1.0:
+        return 'LONG'
+    elif ratio <= 0.89:
+        return 'SHORT'
+    else:
+        return 'AVG'

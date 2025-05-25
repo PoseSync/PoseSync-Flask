@@ -1,24 +1,24 @@
 import numpy as np
 
 from app.util.pose_landmark_enum import PoseLandmark
-from app.util.shoulderPress_util import calculate_elbow_position_by_forward_angle, \
+from app.util.exercise_util.shoulderPress_util import calculate_elbow_position_by_forward_angle, \
     adjust_wrist_direction_to_preserve_min_angle
-# 공유 전역 상태에서 body_type과 카운터 가져오기
-from app.shared.global_state import current_user_body_type, press_counter
+# 공유 전역 상태에서 body_type과 뼈길이 데이터 가져오기
+from app.shared.global_state import press_counter
+
 
 def process_dumbbell_shoulderPress(data):
+
     landmarks = data.get("landmarks", [])
+    bone_lengths = data.get("bone_lengths", {})
+    body_type = data.get("body_type", {})
 
-    bone_lengths = data.get("bone_lengths", {})  # 첫 exercise_date 패킷 연결에서 계산한 뼈 길이
+    if not bone_lengths:
+        raise Exception("사용자 뼈길이 정보가 없습니다.")
 
-    # landmarks = landmark_stabilizer.stabilize_landmarks(landmarks, dead_zone=0.2)
+    # bone_lengths와 body_type 사용
+    arm_type = body_type.get("arm_type", "AVG")
 
-    # 안정화는 소켓 레벨에서 이미 적용되었으므로 여기서는 제거
-    # 소켓에서 이미 안정화된 랜드마크를 전달받아 사용
-
-
-    # 현재 저장된 body_type 사용 (없으면 기본값)
-    arm_type = current_user_body_type if current_user_body_type else "AVG"
 
 
     # 어깨좌표 [0] : 왼쪽 [1] : 오른쪽
@@ -69,7 +69,7 @@ def process_dumbbell_shoulderPress(data):
         shoulder = shoulders_coord[side]
         elbow_y = elbows_coord[side]['y']  # 현재 팔꿈치 높이 유지
 
-        # 각 팔에 맞는 길이 사용 (side_label 활용)
+        # ✅ 전역변수에서 뼈길이 사용
         current_upper_arm_length = bone_lengths[f"{side_label}_upper_arm_length"]
         current_forearm_length = bone_lengths[f"{side_label}_forearm_length"]
 
@@ -81,9 +81,9 @@ def process_dumbbell_shoulderPress(data):
         # 🟥 팔꿈치 위치 계산 (전방 외각 유지)
         elbow_pos = calculate_elbow_position_by_forward_angle(
             shoulder_coord=[shoulder['x'], shoulder['y'], shoulder['z']],
+            current_elbow_coord=[elbows_coord[side]['x'], elbows_coord[side]['y'], elbows_coord[side]['z']],
             arm_type=arm_type,
             upper_arm_length=current_upper_arm_length,
-            elbow_y=elbow_y,
             side=side_label  # side_label을 그대로 전달
         )
 
