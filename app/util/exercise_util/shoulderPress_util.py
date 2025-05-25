@@ -93,14 +93,16 @@ def calculate_elbow_position_by_forward_angle(
    # if side == "left":
    #     x_offset = -x_offset
    x_adjustment = 0.09  # 이 값을 조정해서 양쪽 팔 위치 제어
+   z_adjustment = 0.001
    if side == "left":
        x_offset = -x_offset + x_adjustment  # 왼쪽: 음수로 만든 후 추가로 빼기
+       z_offset = -z_offset + 0.001
    else:
        x_offset = x_offset - x_adjustment  # 오른쪽: 양수에 추가로 더하기
 
    # 최종 팔꿈치 좌표
    elbow_x = shoulder_x + x_offset
-   elbow_z = shoulder_z + z_offset + 0.001
+   elbow_z = shoulder_z + z_offset
 
    print(f'x_offset : {x_offset}, z_offset : {z_offset}')
 
