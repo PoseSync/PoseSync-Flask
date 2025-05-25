@@ -1,8 +1,9 @@
 from twilio.rest import Client
+import config
 
 # Twilio 계정 정보
 account_sid = 'AC5e938b09a639e17e3a71b42f62e234b4'
-auth_token = 'a11cbce7b71e69fa8ada10182191ca79'
+auth_token = config.TWILIO_AUTH_TOKEN
 twilio_number = '+18059266399'  # 너가 구매한 번호
 
 # 추후 수정
