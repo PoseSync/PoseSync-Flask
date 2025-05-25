@@ -74,28 +74,28 @@ def process_barbell_curl(data):
 
     # 4. 랜드마크 업데이트
     # 오른팔 팔꿈치
-    right_elbow_visibility = landmarks[PoseLandmark.RIGHT_ELBOW].get('visibility', 1.0)
+    right_elbow_visibility = landmarks[PoseLandmark.RIGHT_ELBOW].get('visibility')
     landmarks[PoseLandmark.RIGHT_ELBOW]['x'] = right_elbow_pos[0]
     landmarks[PoseLandmark.RIGHT_ELBOW]['y'] = right_elbow_pos[1]
     landmarks[PoseLandmark.RIGHT_ELBOW]['z'] = right_elbow_pos[2]
     landmarks[PoseLandmark.RIGHT_ELBOW]['visibility'] = right_elbow_visibility
 
     # 오른팔 손목
-    right_wrist_visibility = landmarks[PoseLandmark.RIGHT_WRIST].get('visibility', 1.0)
+    right_wrist_visibility = landmarks[PoseLandmark.RIGHT_WRIST].get('visibility')
     landmarks[PoseLandmark.RIGHT_WRIST]['x'] = right_wrist_pos[0]
     landmarks[PoseLandmark.RIGHT_WRIST]['y'] = right_wrist_pos[1]
     landmarks[PoseLandmark.RIGHT_WRIST]['z'] = right_wrist_pos[2]
     landmarks[PoseLandmark.RIGHT_WRIST]['visibility'] = right_wrist_visibility
 
     # 왼팔 팔꿈치
-    left_elbow_visibility = landmarks[PoseLandmark.LEFT_ELBOW].get('visibility', 1.0)
+    left_elbow_visibility = landmarks[PoseLandmark.LEFT_ELBOW].get('visibility')
     landmarks[PoseLandmark.LEFT_ELBOW]['x'] = left_elbow_pos[0]
     landmarks[PoseLandmark.LEFT_ELBOW]['y'] = left_elbow_pos[1]
     landmarks[PoseLandmark.LEFT_ELBOW]['z'] = left_elbow_pos[2]
     landmarks[PoseLandmark.LEFT_ELBOW]['visibility'] = left_elbow_visibility
 
     # 왼팔 손목
-    left_wrist_visibility = landmarks[PoseLandmark.LEFT_WRIST].get('visibility', 1.0)
+    left_wrist_visibility = landmarks[PoseLandmark.LEFT_WRIST].get('visibility')
     landmarks[PoseLandmark.LEFT_WRIST]['x'] = left_wrist_pos[0]
     landmarks[PoseLandmark.LEFT_WRIST]['y'] = left_wrist_pos[1]
     landmarks[PoseLandmark.LEFT_WRIST]['z'] = left_wrist_pos[2]

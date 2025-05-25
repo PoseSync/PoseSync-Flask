@@ -1,6 +1,6 @@
-from app.services.exercise_service.barbellCurlService import process_barbell_curl
+from app.services.exercise_service.barbell_curl_service import process_barbell_curl
 from app.services.squatService.squat_service import process_squat
-from app.services.exercise_service.sholderPressService import process_dumbbell_shoulderPress
+from app.services.exercise_service.shoulder_press_service import process_dumbbell_shoulderPress
 from app.services.user_info_service import save_user_and_body_data_and_body_type
 from flask import Blueprint, jsonify, request
 from app.services.lungeService.lungeService import correct_lunge_pose_for_lunge
