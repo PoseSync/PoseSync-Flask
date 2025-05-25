@@ -24,7 +24,7 @@ def save_body_length_data(phone_number: str, distances: dict):
         raise ValueError("해당 사용자가 존재하지 않습니다")
 
     def avg(val1, val2):
-        return round((val1 + val2) / 2, 2)
+        return round((val1 + val2) / 2, 5)
 
     # 기존 BodyData 존재 여부 확인
     existing_body_data = BodyData.query.filter_by(user_id=user.user_id).first()

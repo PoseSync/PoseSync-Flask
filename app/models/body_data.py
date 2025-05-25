@@ -16,9 +16,9 @@ class BodyData(db.Model):
     tibia_length = db.Column(db.Numeric(5, 5))       # 정강이 길이
     shoulder_width = db.Column(db.Numeric(5, 5))     # 어깨너비
     hip_joint_width = db.Column(db.Numeric(5, 5))    # 고관절너비
-    # upper_body_length = db.Column(db.Numeric(5, 2))
-    # lower_body_length = db.Column(db.Numeric(5, 2))
-    # neck_length = db.Column(db.Numeric(5, 2))
+    upper_body_length = db.Column(db.Numeric(5, 2))
+    lower_body_length = db.Column(db.Numeric(5, 2))
+    neck_length = db.Column(db.Numeric(5, 2))
 
     # created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
     # updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))

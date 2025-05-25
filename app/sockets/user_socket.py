@@ -7,7 +7,7 @@ from flask_socketio import emit, disconnect
 # AI 모델 가져오기
 from app.ai.ai_model import fall_model
 from app.controllers.user_controller import handle_data_controller
-from app.services.body_service.body_spec_service import get_body_info_for_dumbbell_shoulder_press, get_all_body_info
+from app.services.body_service.body_spec_service import get_all_body_info
 from app.services.user_info_service import get_exercise_set, save_updated_exercise_set
 # 공유 전역 상태 가져오기
 from app.shared.global_state import (
@@ -59,7 +59,7 @@ def register_user_socket(socketio):
             request_id = data.get('requestId')
 
             fall = False
-            print(f'클라이언트에서 받자마자 => {landmarks}')
+            print(f'클라이언트에서 받자마자 => {data}')
 
             # 1. 가속도 계산 및 시퀀스 버퍼에 누적
             acceleration = calculate_acceleration(landmarks)
@@ -148,7 +148,7 @@ def register_user_socket(socketio):
 
             fall = False
 
-            print(f'클라이언트에서 받자마자 => {landmarks}')
+            print(f'클라이언트에서 받자마자 => {data}')
 
             # 1. 가속도 계산 및 시퀀스 버퍼에 누적
             acceleration = calculate_acceleration(landmarks)
@@ -232,6 +232,9 @@ def register_user_socket(socketio):
     @socketio.on('disconnect_client')
     def handle_disconnect_client(data):
         global is_first,client_sid
+
+        print('disconnect_client: 패킷 호출됨')
+
         phone_number = data.get('phoneNumber')
         # 지금까지 한 운동 횟수
         current_count = data.get('count')
