@@ -2,9 +2,9 @@ from twilio.rest import Client
 import config
 
 # Twilio 계정 정보
-account_sid = 'AC5e938b09a639e17e3a71b42f62e234b4'
+account_sid = config.TWILIO_ACCOUNT_SID
 auth_token = config.TWILIO_AUTH_TOKEN
-twilio_number = '+18059266399'  # 너가 구매한 번호
+twilio_number = config.TWILIO_NUMBER  # 너가 구매한 번호
 
 # 추후 수정
 voice_url = 'http://3.37.36.81:5002/voice.xml'  # AWS에서 실행 중인 XML 주소
