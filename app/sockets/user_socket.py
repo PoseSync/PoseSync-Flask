@@ -217,6 +217,8 @@ def register_user_socket(socketio):
             # 클라이언트에서 사용하지 않는 데이터 바로 삭제
             del result['landmarks']  # 원본 변환 랜드마크 제거 (네트워크 부하 감소)
             del result['__transformData']  # 변환 데이터 삭제
+            del result['body_type'] # 체형 데이터 삭제
+            del result['bone_lengths'] # 뼈 길이 데이터 삭제
 
             # 결과 전송
             print(f'클라이언트에게 전송 => {result}')
