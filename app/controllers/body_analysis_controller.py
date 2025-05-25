@@ -19,8 +19,10 @@ def analyze_body():
         data = request.get_json()
         print(f'🔍 [STEP 1] 요청 데이터 파싱 완료: {type(data)}, 키 개수: {len(data) if data else 0}')
 
-        # 랜드마크 10개 받아오기
+        # 랜드마크 받아오기
         landmarks = data.get('landmarks', [])
+        # 월드 랜드마크 받아오기
+        world_landmarks = data.get('world_landmarks', [])
         print(f'🔍 [STEP 2] 랜드마크 데이터 추출: {len(landmarks)}개의 랜드마크')
 
         # 전화번호
@@ -51,7 +53,9 @@ def analyze_body():
         print('🔍 [STEP 5] average_landmarks 호출 시작')
         try:
             new_landmarks = average_landmarks(landmarks)
+            new_world_landmarks = average_landmarks(world_landmarks)
             print(f'🔍 [STEP 5-1] average_landmarks 완료: {len(new_landmarks) if new_landmarks else 0}개의 평균 랜드마크')
+            print(f'🔍 [STEP 5-2] average_landmarks 완료: {len(new_world_landmarks) if new_world_landmarks else 0}개의 평균 랜드마크')
             print('❌❌❌ 여기까지됨')
         except Exception as e:
             print(f'❌ [ERROR STEP 5] average_landmarks 오류: {str(e)}')
@@ -60,7 +64,8 @@ def analyze_body():
         # 체형 분석 수행
         print('🔍 [STEP 6] analyze_body_type 호출 시작')
         try:
-            analysis_result = analyze_body_type(new_landmarks, height)
+            # 월드 랜드마크로 체형 분석
+            analysis_result = analyze_body_type(new_world_landmarks, height)
             print(f'🔍 [STEP 6-1] analyze_body_type 완료: {type(analysis_result)}')
             print(
                 f'🔍 [STEP 6-2] 분석 결과 키들: {list(analysis_result.keys()) if isinstance(analysis_result, dict) else "dict가 아님"}')
