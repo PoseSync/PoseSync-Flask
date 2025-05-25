@@ -13,24 +13,37 @@ is_first = True  # 현재 클라이언트로 전달받은 데이터가 맨 처�
 current_user_body_type = None
 current_user_bone_lengths = None  # ✅ 새로 추가
 client_sid = None  # 현재 연결된 클라이언트의 세션 ID
-
-# 운동 카운터 인스턴스 - 전역으로 관리
-counter = None
+counter = None # 운동 카운터 인스턴스 - 전역으로 관리
 
 
-def initialize_exercise_counter():
-    """운동 카운터 인스턴스 초기화"""
+def initialize_exercise_counter(exercise_type: str):
+    """
+    운동 타입에 맞춰 단일 counter 를 생성
+    """
     global counter
+    counter = None  # 먼저 비움
 
-    counter = RepCounter(
-        anchor_id=PoseLandmark.LEFT_EYE_INNER,  # 눈보다 위면 up 아래면 down
-        moving_id=PoseLandmark.LEFT_WRIST,
-        axis='y',  # y축 기준으로 판단
-        down_offset=0.02,  # 어깨보다 아래로 이만큼 있으면 "down" 상태
-        up_offset=0.1,  # 어깨보다 위로 이만큼 있으면 "up" 상태
-        buffer_size=3,
-        initial_state="down"
-    )
+    if exercise_type == "dumbbell_shoulder_press":
+        print(f'{exercise_type} 카운터 생성')
+        counter = RepCounter(
+            anchor_id=PoseLandmark.LEFT_EYE_INNER,  # 눈보다 위면 up 아래면 down
+            moving_id=PoseLandmark.LEFT_WRIST,
+            axis='y',  # y축 기준으로 판단
+            down_offset=0.02,  # 어깨보다 아래로 이만큼 있으면 "down" 상태
+            up_offset=0.1,  # 어깨보다 위로 이만큼 있으면 "up" 상태
+            buffer_size=3,
+            initial_state="down"
+        )
+
+    elif exercise_type == "barbell_curl":
+        counter = RepCounter(
+            anchor_id   = PoseLandmark.RIGHT_ELBOW,
+            moving_id   = PoseLandmark.RIGHT_WRIST,
+            axis        = 'y',
+            down_offset = 0.15,
+            up_offset   = 0.05,
+            initial_state="down"
+        )
 
 
 # 전역변수 초기화 함수

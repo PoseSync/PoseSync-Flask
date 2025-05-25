@@ -116,14 +116,14 @@ def register_user_socket(socketio):
             landmarks = data.get('landmarks', [])
             phone_number = data.get('phoneNumber')
             exercise_type = data.get('exerciseType')
-            initialize_exercise_counter(exercise_type) # 운동 카운터 초기화
+
 
             # 첫 데이터 패킷일 때만 body_type과 뼈길이 데이터 가져오기
             if is_first:
                 try:
                     # 모든 body_type + body_data 한 번에 조회
                     current_user_body_type = get_all_body_info(phone_number)
-
+                    initialize_exercise_counter(exercise_type)  # 운동 카운터 초기화
 
                     # ✅ DB에서 뼈길이 데이터 가져오기 (필수)
                     db_bone_lengths = get_user_bone_lengths(phone_number)
