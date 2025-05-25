@@ -38,12 +38,10 @@ def process_barbell_curl(data):
     # 몸 중심선 계산
     body_center_x = (left_shoulder['x'] + right_shoulder['x']) / 2
 
-    # 어깨 너비 계산
+    # 어깨 너비 및 팔 길이 (DB에서는 좌우 구분 없이 평균값으로 저장됨)
     shoulder_width = bone_lengths.get("shoulder_width", 0.4)
-
-    # 오른팔 뼈 길이
-    right_upper_arm_length = bone_lengths.get("right_upper_arm_length", 0.3)
-    right_forearm_length = bone_lengths.get("right_forearm_length", 0.25)
+    upper_arm_length = bone_lengths.get("upper_arm_length", 0.3)  # 좌우 평균값
+    forearm_length = bone_lengths.get("forearm_length", 0.25)     # 좌우 평균값
 
     # 1. 오른팔 팔꿈치 위치 계산
     right_elbow_pos = calculate_elbow_position_for_barbell_curl(
@@ -51,7 +49,7 @@ def process_barbell_curl(data):
         hip_coord=[right_hip['x'], right_hip['y'], right_hip['z']],
         current_elbow_coord=[right_elbow['x'], right_elbow['y'], right_elbow['z']],
         arm_type=arm_type,
-        upper_arm_length=right_upper_arm_length,
+        upper_arm_length=upper_arm_length,  # 평균값 사용
         side="right"
     )
 
@@ -60,7 +58,7 @@ def process_barbell_curl(data):
         elbow_coord=right_elbow_pos,
         current_wrist_coord=[right_wrist['x'], right_wrist['y'], right_wrist['z']],
         shoulder_width=shoulder_width,
-        forearm_length=right_forearm_length,
+        forearm_length=forearm_length,  # 평균값 사용
         arm_type=arm_type,
         side="right"
     )
@@ -74,28 +72,28 @@ def process_barbell_curl(data):
 
     # 4. 랜드마크 업데이트
     # 오른팔 팔꿈치
-    right_elbow_visibility = landmarks[PoseLandmark.RIGHT_ELBOW].get('visibility')
+    right_elbow_visibility = landmarks[PoseLandmark.RIGHT_ELBOW].get('visibility', 1.0)
     landmarks[PoseLandmark.RIGHT_ELBOW]['x'] = right_elbow_pos[0]
     landmarks[PoseLandmark.RIGHT_ELBOW]['y'] = right_elbow_pos[1]
     landmarks[PoseLandmark.RIGHT_ELBOW]['z'] = right_elbow_pos[2]
     landmarks[PoseLandmark.RIGHT_ELBOW]['visibility'] = right_elbow_visibility
 
     # 오른팔 손목
-    right_wrist_visibility = landmarks[PoseLandmark.RIGHT_WRIST].get('visibility')
+    right_wrist_visibility = landmarks[PoseLandmark.RIGHT_WRIST].get('visibility', 1.0)
     landmarks[PoseLandmark.RIGHT_WRIST]['x'] = right_wrist_pos[0]
     landmarks[PoseLandmark.RIGHT_WRIST]['y'] = right_wrist_pos[1]
     landmarks[PoseLandmark.RIGHT_WRIST]['z'] = right_wrist_pos[2]
     landmarks[PoseLandmark.RIGHT_WRIST]['visibility'] = right_wrist_visibility
 
     # 왼팔 팔꿈치
-    left_elbow_visibility = landmarks[PoseLandmark.LEFT_ELBOW].get('visibility')
+    left_elbow_visibility = landmarks[PoseLandmark.LEFT_ELBOW].get('visibility', 1.0)
     landmarks[PoseLandmark.LEFT_ELBOW]['x'] = left_elbow_pos[0]
     landmarks[PoseLandmark.LEFT_ELBOW]['y'] = left_elbow_pos[1]
     landmarks[PoseLandmark.LEFT_ELBOW]['z'] = left_elbow_pos[2]
     landmarks[PoseLandmark.LEFT_ELBOW]['visibility'] = left_elbow_visibility
 
     # 왼팔 손목
-    left_wrist_visibility = landmarks[PoseLandmark.LEFT_WRIST].get('visibility')
+    left_wrist_visibility = landmarks[PoseLandmark.LEFT_WRIST].get('visibility', 1.0)
     landmarks[PoseLandmark.LEFT_WRIST]['x'] = left_wrist_pos[0]
     landmarks[PoseLandmark.LEFT_WRIST]['y'] = left_wrist_pos[1]
     landmarks[PoseLandmark.LEFT_WRIST]['z'] = left_wrist_pos[2]
@@ -107,7 +105,7 @@ def process_barbell_curl(data):
         completed = global_state.counter.update(landmarks)
 
         if completed:
-            count = global_state. counter.count
+            count = global_state.counter.count
             print(f"✅ 바벨컬 횟수: {count}회")
             data["count"] = count
         elif "count" not in data:
