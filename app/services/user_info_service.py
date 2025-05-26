@@ -57,6 +57,21 @@ def get_exercise_set_service(phone_number):
         ]
     }
 
+# 다음 운동세트를 가져오는 함수
+def get_next_exercise_set(current_id):
+    # 현재 ExerciseSet 객체 조회
+    current_set = ExerciseSet.query.filter_by(id=current_id).first()
+    if not current_set or current_set.routine_group is None:
+        return None
+
+    # 같은 routine_group이고, id가 현재 id보다 1 큰 객체 조회
+    next_set = ExerciseSet.query.filter_by(
+        routine_group=current_set.routine_group
+    ).filter(
+        ExerciseSet.id == current_id + 1
+    ).first()
+
+    return next_set  # 없으면 자동으로 None 반환
 
 # ExerciseSet 엔티티를 받아 UPDATE 한 후 저장하는 함수
 def save_updated_exercise_set(exercise_set:ExerciseSet):
@@ -66,7 +81,25 @@ def save_updated_exercise_set(exercise_set:ExerciseSet):
     updated_exercise_set.is_success = exercise_set.is_success
     db.session.add(updated_exercise_set)
     db.session.flush()
-    return updated_exercise_set
+
+    # 현재 update된 ExerciseSet 객체가 몇번째 운동인지?
+    routine_group = updated_exercise_set.routine_group
+    all_exercise_set = ExerciseSet.query.filter_by(routine_group=routine_group).all()
+
+    # is_finished=True인 요소 중에서 가장 최근(created_at 기준) 데이터 찾기
+    latest_finished = max(
+        (es for es in all_exercise_set if es.is_finished), 
+        key=lambda x: x.created_at, 
+        default=None
+    )
+
+    # 해당 요소의 인덱스 가져오기
+    if latest_finished:
+        latest_index = all_exercise_set.index(latest_finished)
+    else:
+        latest_index = -1  # 해당 조건을 만족하는 요소가 없는 경우
+
+    return updated_exercise_set, latest_index
 
 # 전화번호로 해당 User와 가장 가까운 ExerciseSet 반환 함수
 def get_exercise_set(phone_number):

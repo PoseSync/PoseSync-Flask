@@ -5,7 +5,7 @@ from app.models import db, User  # models/__init__.py에서 정의한 db
 import config
 from sqlalchemy import inspect
 from app.controllers.user_controller import save_body_data, body_data_bp
-from app.services.user_info_service import save_phone_number_and_height, save_exercise_set_service, get_exercise_set_service, is_user_exist
+from app.services.user_info_service import save_phone_number_and_height, save_exercise_set_service, get_exercise_set_service, is_user_exist, get_next_exercise_set
 from app.models.exercise_set import ExerciseSet
 
 from app.models.user import User
@@ -45,6 +45,30 @@ register_user_socket(socketio)
 @app.route('/')
 def home():
     return 'Flask + SQLAlchemy + MySQL + WebSocket 실행 중!'
+
+@app.route('/test', methods=['GET'])
+def test():
+    id = request.args.get('id')
+    exercise_set = get_next_exercise_set(int(id))
+    
+    if exercise_set:
+        result = {
+            "id": exercise_set.id,
+            "user_id": exercise_set.user_id,
+            "exercise_type": exercise_set.exercise_type,
+            "exercise_weight": exercise_set.exercise_weight,
+            "target_count": exercise_set.target_count,
+            "current_count": exercise_set.current_count,
+            "is_finished": exercise_set.is_finished,
+            "is_success": exercise_set.is_success,
+            "routine_group": exercise_set.routine_group,
+            "created_at": exercise_set.created_at.isoformat() if exercise_set.created_at else None,
+            "updated_at": exercise_set.updated_at.isoformat() if exercise_set.updated_at else None
+        }
+        return jsonify(result), 200
+    else:
+        return jsonify({"error": "No data"}), 400
+
 
 # 전화번호와 키로 User 생성하는 API
 @app.route('/create_user', methods=['POST'])

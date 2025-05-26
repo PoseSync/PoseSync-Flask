@@ -8,7 +8,7 @@ from flask_socketio import emit, disconnect
 from app.ai.ai_model import fall_model
 from app.controllers.user_controller import handle_data_controller
 from app.services.body_service.body_spec_service import get_all_body_info
-from app.services.user_info_service import get_exercise_set, save_updated_exercise_set
+from app.services.user_info_service import get_exercise_set, save_updated_exercise_set, get_next_exercise_set
 # 공유 전역 상태 가져오기
 from app.shared.global_state import (
     accel_seq_buffer,
@@ -258,15 +258,35 @@ def register_user_socket(socketio):
             else:
                 exercise_set.is_success = True
 
-            # UPDATE된 updated_exercise_set 객체 GET
-            updated_exercise_set = save_updated_exercise_set(exercise_set)
+            # UPDATE된 updated_exercise_set 객체, 현재 끝낸 운동 몇번째 세트인지 GET
+            updated_exercise_set, set_number = save_updated_exercise_set(exercise_set)
+            # 인덱스는 0부터 시작이므로 +1
+            set_number = int(set_number) + 1
+
+            # 다음 운동 세트 가져오기
+            next_set = get_next_exercise_set(updated_exercise_set.id)
+
+            # 다음 운동 세트가 있다면 True, 없으면 False
+            is_last = False
+            if next_set:
+                is_last = True
 
             # 끝난 운동 세트의 정보 클라이언트로 전송
             if updated_exercise_set:
                 socketio.emit('next', {
                     "exerciseType": updated_exercise_set.exercise_type,
                     "current_count": updated_exercise_set.current_count,
-                    "exercise_weight": updated_exercise_set.exercise_weight
+                    "exercise_weight": updated_exercise_set.exercise_weight,
+                    # 현재 운동 세트 번호
+                    "set_number": set_number,
+                    # 다음 운동 무게
+                    "next_weight": next_set.exercise_weight,
+                    # 다음 운동 횟수
+                    "next_target_count": next_set.target_count,
+                    # 다음 운동 있는지 없는지 여부
+                    "is_last": is_last,
+                    # 횟수 초기화 용도
+                    "count": 0
                 }, to=client_sid)
         else:
             print(f"⚠️ 사용자에 대한 운동 세트 정보가 없습니다: {phone_number}")
