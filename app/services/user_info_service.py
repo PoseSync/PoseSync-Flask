@@ -82,20 +82,22 @@ def save_updated_exercise_set(exercise_set:ExerciseSet):
     db.session.add(updated_exercise_set)
     db.session.flush()
 
-    # 현재 update된 ExerciseSet 객체가 몇번째 운동인지?
     routine_group = updated_exercise_set.routine_group
+    
+    # 현재 끝낸 운동과 같은 routine_group 값을 갖는 exercise_set 객체들을 담는 List
     all_exercise_set = ExerciseSet.query.filter_by(routine_group=routine_group).all()
 
-    # is_finished=True인 요소 중에서 가장 최근(created_at 기준) 데이터 찾기
-    latest_finished = max(
-        (es for es in all_exercise_set if es.is_finished), 
-        key=lambda x: x.created_at, 
+    # is_finished=False인 요소 중에서 가장 나중에 들어온 데이터 찾기 (created_at 가장 큰 값)
+    # 가장 먼저 저장된(is_finished=False) 데이터 → 과거
+    earliest_unfinished = min(
+        (es for es in all_exercise_set if not es.is_finished), 
+        key=lambda x: x.created_at,
         default=None
     )
 
     # 해당 요소의 인덱스 가져오기
-    if latest_finished:
-        latest_index = all_exercise_set.index(latest_finished)
+    if earliest_unfinished:
+        latest_index = all_exercise_set.index(earliest_unfinished)
     else:
         latest_index = -1  # 해당 조건을 만족하는 요소가 없는 경우
 
