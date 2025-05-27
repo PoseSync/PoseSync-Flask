@@ -54,9 +54,8 @@ def analyze_body():
         try:
             new_landmarks = average_landmarks(landmarks)
             new_world_landmarks = average_landmarks(world_landmarks)
-            print(f'🔍 [STEP 5-1] average_landmarks 완료: {len(new_landmarks) if new_landmarks else 0}개의 평균 랜드마크')
-            print(f'🔍 [STEP 5-2] average_landmarks 완료: {len(new_world_landmarks) if new_world_landmarks else 0}개의 평균 랜드마크')
-            print('❌❌❌ 여기까지됨')
+            print(f'🔍 [STEP 5-1] new_landmarks : {new_landmarks} new_world_landmarks : {new_world_landmarks}')
+
         except Exception as e:
             print(f'❌ [ERROR STEP 5] average_landmarks 오류: {str(e)}')
             raise e
