@@ -76,11 +76,20 @@ def get_next_exercise_set(current_id):
 # ExerciseSet 엔티티를 받아 UPDATE 한 후 저장하는 함수
 def save_updated_exercise_set(exercise_set:ExerciseSet):
     updated_exercise_set = ExerciseSet.query.filter_by(id = exercise_set.id).first()
+    # 로그 출력 - current_count
+    print(f"[LOG] current_count: {updated_exercise_set.current_count} -> {exercise_set.current_count}")
     updated_exercise_set.current_count = exercise_set.current_count
+
+    # 로그 출력 - is_finished
+    print(f"[LOG] is_finished: {updated_exercise_set.is_finished} -> {exercise_set.is_finished}")
     updated_exercise_set.is_finished = exercise_set.is_finished
+
+    # 로그 출력 - is_success
+    print(f"[LOG] is_success: {updated_exercise_set.is_success} -> {exercise_set.is_success}")
     updated_exercise_set.is_success = exercise_set.is_success
     db.session.add(updated_exercise_set)
     db.session.flush()
+    db.session.commit()
 
     routine_group = updated_exercise_set.routine_group
     
