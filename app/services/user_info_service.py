@@ -109,7 +109,7 @@ def get_exercise_set(phone_number):
 
     # 최신 순으로 정렬  
     # 가장 최근 1개
-    exercise_set = ExerciseSet.query.filter_by(user_id=user.user_id, is_finished=False).order_by(ExerciseSet.created_at.desc()).first()
+    exercise_set = ExerciseSet.query.filter_by(user_id=user.user_id, is_finished=False).order_by(ExerciseSet.created_at.asc()).first()
 
     if not exercise_set:
         raise ValueError("No exercise sets found")
