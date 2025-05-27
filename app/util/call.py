@@ -7,7 +7,7 @@ auth_token = config.TWILIO_AUTH_TOKEN
 twilio_number = config.TWILIO_NUMBER  # 너가 구매한 번호
 
 # 추후 수정
-voice_url = 'http://3.37.36.81:5002/voice.xml'  # AWS에서 실행 중인 XML 주소
+voice_url = config.VOICE_URL # AWS에서 실행 중인 XML 주소
 
 client = Client(account_sid, auth_token)
 

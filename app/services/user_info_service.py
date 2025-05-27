@@ -87,7 +87,7 @@ def save_updated_exercise_set(exercise_set:ExerciseSet):
     # 현재 끝낸 운동과 같은 routine_group 값을 갖는 exercise_set 객체들을 담는 List
     all_exercise_set = ExerciseSet.query.filter_by(routine_group=routine_group).all()
 
-    # is_finished=False인 요소 중에서 가장 나중에 들어온 데이터 찾기 (created_at 가장 큰 값)
+    # is_finished=False인 요소 중에서 가장 나중에 들어온 데이터 찾기 (created_at 가장 작은 값)
     # 가장 먼저 저장된(is_finished=False) 데이터 → 과거
     earliest_unfinished = min(
         (es for es in all_exercise_set if not es.is_finished), 
