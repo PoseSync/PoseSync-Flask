@@ -176,7 +176,7 @@ def calculate_elbow_position_by_forward_angle(
   z_offset = math.sin(forward_angle_radians) * horizontal_projection
 
   # 7. 좌우 대칭 조정
-  x_adjustment = 0.09  # 이 값을 조정해서 양쪽 팔 위치 제어
+  x_adjustment = 0.03  # 이 값을 조정해서 양쪽 팔 위치 제어
   z_adjustment = 0.001
   if side == "left":
       x_offset = -x_offset + x_adjustment

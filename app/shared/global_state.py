@@ -30,7 +30,7 @@ def initialize_exercise_counter(exercise_type: str):
             moving_id=PoseLandmark.LEFT_WRIST,
             axis='y',  # y축 기준으로 판단
             down_offset=0.02,  # 어깨보다 아래로 이만큼 있으면 "down" 상태
-            up_offset=0.1,  # 어깨보다 위로 이만큼 있으면 "up" 상태
+            up_offset=0.05,  # 어깨보다 위로 이만큼 있으면 "up" 상태
             buffer_size=3,
             initial_state="down"
         )
