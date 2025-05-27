@@ -102,6 +102,21 @@ def register_user_socket(socketio):
             traceback.print_exc()
             emit('result', {'error': '서버 내부 오류가 발생했습니다.'})
 
+    @socketio.on('disconnect_monitor')
+    def disconnect_monitor(data):
+        global is_first,client_sid
+
+        phone_number = data.get('phoneNumber')
+
+        is_first = True
+
+        if client_sid:
+            disconnect(sid=client_sid)
+            client_sid = None
+
+        reset_globals()
+        print(f'🧹 연결 해제됨: {phone_number}')
+
 
     @socketio.on('exercise_data')
     def handle_exercise_data(data):
