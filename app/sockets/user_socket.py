@@ -281,9 +281,9 @@ def register_user_socket(socketio):
             next_set = get_next_exercise_set(updated_exercise_set.id)
 
             # 다음 운동 세트가 있다면 True, 없으면 False
-            is_last = False
+            is_last = True
             if next_set:
-                is_last = True
+                is_last = False
 
             # 끝난 운동 세트의 정보 클라이언트로 전송
             if updated_exercise_set:
