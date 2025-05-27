@@ -112,7 +112,7 @@ class BodyAnalyzer:
         results["arm_type"] = {
             "type": arm_type,
             "confidence": arm_confidence,
-            "ratio": f"1:{ratios['arm_ratio']:.2f}",
+            "ratio": f"1:{ratios['arm_ratio']:.5f}",
             "text": BODY_TYPE_TEXT["arm"][arm_type]
         }
         
@@ -125,7 +125,7 @@ class BodyAnalyzer:
         results["upper_lower_type"] = {
             "type": upper_lower_type,
             "confidence": upper_lower_confidence,
-            "ratio": f"1:{ratios['upper_lower_ratio']:.2f}",
+            "ratio": f"1:{ratios['upper_lower_ratio']:.5f}",
             "text": BODY_TYPE_TEXT["upper_lower"][upper_lower_type]
         }
         
@@ -138,7 +138,7 @@ class BodyAnalyzer:
         results["femur_tibia_type"] = {
             "type": femur_tibia_type,
             "confidence": femur_tibia_confidence,
-            "ratio": f"1:{ratios['femur_tibia_ratio']:.2f}",
+            "ratio": f"1:{ratios['femur_tibia_ratio']:.5f}",
             "text": BODY_TYPE_TEXT["femur_tibia"][femur_tibia_type]
         }
         
@@ -151,7 +151,7 @@ class BodyAnalyzer:
         results["hip_type"] = {
             "type": hip_type,
             "confidence": hip_confidence,
-            "ratio": f"{ratios['hip_height_ratio']:.2f}",
+            "ratio": f"{ratios['hip_height_ratio']:.5f}",
             "text": BODY_TYPE_TEXT["hip"][hip_type]
         }
         
