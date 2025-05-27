@@ -26,8 +26,8 @@ def initialize_exercise_counter(exercise_type: str):
     if exercise_type == "dumbbell_shoulder_press":
         print(f'{exercise_type} 카운터 생성')
         counter = RepCounter(
-            anchor_id=PoseLandmark.LEFT_EYE_INNER,  # 눈보다 위면 up 아래면 down
-            moving_id=PoseLandmark.LEFT_WRIST,
+            anchor_id=PoseLandmark.MOUTH_LEFT,  # 눈보다 위면 up 아래면 down
+            moving_id=PoseLandmark.LEFT_ELBOW,
             axis='y',  # y축 기준으로 판단
             down_offset=0.02,  # 어깨보다 아래로 이만큼 있으면 "down" 상태
             up_offset=0.05,  # 어깨보다 위로 이만큼 있으면 "up" 상태
