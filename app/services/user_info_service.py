@@ -97,7 +97,7 @@ def save_updated_exercise_set(exercise_set:ExerciseSet):
     else:
         latest_index = -1  # 해당 조건을 만족하는 요소가 없는 경우
 
-    return latest_index
+    return  exercise_set, latest_index
 
 # 전화번호로 해당 User와 가장 가까운 ExerciseSet 반환 함수
 def get_exercise_set(phone_number):
