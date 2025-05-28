@@ -5,19 +5,19 @@ from app.util.math_util import normalize_vector, vector_angle_deg
 # 상완 타입별 바벨컬 가이드라인
 BARBELL_CURL_GUIDELINE_BY_ARM_TYPE = {
     "LONG": {
-        "grip_width_ratio": 1.1,  # 어깨 너비의 1.1배
+        "grip_width_ratio": 1.15,  # 어깨 너비의 1.1배
         "min_forearm_angle": 30.0,  # 전완-상완 최소 각도
-        "torso_arm_angle": 0.0  # 몸통-상완 각도
+        "torso_arm_angle": 3.0  # 몸통-상완 각도
     },
     "AVG": {
-        "grip_width_ratio": 1.05,
+        "grip_width_ratio": 1.1,
         "min_forearm_angle": 25.0,
-        "torso_arm_angle": 5.0
+        "torso_arm_angle": 8.0
     },
     "SHORT": {
-        "grip_width_ratio": 1.0,
+        "grip_width_ratio": 1.05,
         "min_forearm_angle": 20.0,
-        "torso_arm_angle": 10.0
+        "torso_arm_angle": 12.0
     }
 }
 
@@ -56,11 +56,6 @@ def calculate_elbow_position_for_barbell_curl(
     x_offset = -0.02
     # X 좌표: 어깨와 동일한 위치 유지
     elbow_x = shoulder_x + x_offset
-
-    print(f"[{side}] 바벨컬 팔꿈치 계산 (정변환 좌표계):")
-    print(f"[{side}] 어깨 Y: {shoulder_y:.3f} (위쪽) → 팔꿈치 Y: {elbow_y:.3f} (아래쪽)")
-    print(f"[{side}] Y 변화: {elbow_y - shoulder_y:.3f} (음수=아래로)")
-    print(f"[{side}] 토르소 각도: {torso_arm_angle}°, Z 전진: +{upper_arm_length * math.sin(angle_rad):.3f}")
 
     return [elbow_x, elbow_y, -elbow_z]
 
@@ -101,7 +96,6 @@ def calculate_wrist_position_for_barbell_curl(
 
     # ✅ 최소 각도 체크 및 보정 (사용자가 너무 구부리지 않도록)
     if current_angle < min_forearm_angle:
-        print(f"[{side}] 최소 각도 보정: {current_angle:.1f}° → {min_forearm_angle}°")
         angle_rad = math.radians(min_forearm_angle)
     else:
         # 사용자의 현재 각도 사용 (자연스러운 움직임)
@@ -117,11 +111,6 @@ def calculate_wrist_position_for_barbell_curl(
 
     # ✅ 손목 X 좌표: 어깨 X 좌표에 그립 비율 적용 (자동 좌우 대칭)
     wrist_x = shoulder_x * grip_width_ratio
-
-    print(f"[{side}] 바벨컬 손목 계산 (동적 높이):")
-    print(f"[{side}] 현재 각도: {current_angle:.1f}°, 사용 각도: {math.degrees(angle_rad):.1f}°")
-    print(f"[{side}] 어깨 X: {shoulder_x:.3f} → 손목 X: {wrist_x:.3f} (×{grip_width_ratio:.2f})")
-    print(f"[{side}] 팔꿈치 Y: {elbow_y:.3f} → 손목 Y: {wrist_y:.3f}")
 
     return [wrist_x, wrist_y, wrist_z]
 
@@ -149,9 +138,5 @@ def create_symmetric_arm_positions(
         right_wrist_pos[1],  # Y 동일 (높이)
         right_wrist_pos[2]  # Z 동일 (앞뒤)
     ]
-
-    print(f"대칭 생성 (정변환 좌표계):")
-    print(f"오른팔 → 왼팔 팔꿈치: {right_elbow_pos} → {left_elbow_pos}")
-    print(f"오른팔 → 왼팔 손목: {right_wrist_pos} → {left_wrist_pos}")
 
     return left_elbow_pos, left_wrist_pos
