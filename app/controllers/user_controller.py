@@ -1,24 +1,18 @@
 from app.services.exercise_service.barbell_curl_service import process_barbell_curl
-from app.services.squatService.squat_service import process_squat
 from app.services.exercise_service.shoulder_press_service import process_dumbbell_shoulderPress
 from app.services.user_info_service import save_user_and_body_data_and_body_type
 from flask import Blueprint, jsonify, request
-from app.services.lungeService.lungeService import correct_lunge_pose_for_lunge
+
 
 
 def handle_data_controller(data):
-    if data.get('exerciseType') == 'squat':
-        # 스쿼트 로직 처리 서비스에 data 넘겨주고 비즈니스 로직 처리 위임
-        return process_squat(data)
-    elif data.get('exerciseType') == 'dumbbell_shoulder_press': # 덤벨 숄더프레스
+    if data.get('exerciseType') == 'dumbbell_shoulder_press': # 덤벨 숄더프레스
         result =  process_dumbbell_shoulderPress(data)
         return result
     elif data.get('exerciseType') == 'barbell_curl':  # 바벨 컬
         result = process_barbell_curl(data)
         return result
-    elif data.get('exerciseType') == 'lunge':
-        result = correct_lunge_pose_for_lunge(data)
-        return result
+
 
 # Blueprint 등록
 # 'body_data' => BluePrint ID(식별자) 역할
