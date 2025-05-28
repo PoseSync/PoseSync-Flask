@@ -25,12 +25,12 @@ BARBELL_CURL_GUIDELINE_BY_ARM_TYPE = {
 def calculate_elbow_position_for_barbell_curl(
         shoulder_coord: list,
         hip_coord: list,
-        current_elbow_coord: list,
-        arm_type: str,
+        torso_arm_angle: float,
         upper_arm_length: float,
         side: str = "right"
 ) -> list:
     """
+
     바벨컬을 위한 팔꿈치 위치 계산
 
     🔑 정변환 좌표계 이해:
@@ -43,10 +43,11 @@ def calculate_elbow_position_for_barbell_curl(
 
     shoulder_x, shoulder_y, shoulder_z = shoulder_coord
 
+
     # 토르소 각도를 라디안으로 변환
     angle_rad = math.radians(torso_arm_angle)
 
-    # ✅ 수정: 정변환에서 Y축 위쪽이 양수이므로
+
     # 팔꿈치가 어깨보다 아래에 있으려면 Y값이 더 작아야 함
     elbow_y = shoulder_y - upper_arm_length * math.cos(angle_rad)
 
@@ -56,6 +57,7 @@ def calculate_elbow_position_for_barbell_curl(
     x_offset = -0.02
     # X 좌표: 어깨와 동일한 위치 유지
     elbow_x = shoulder_x + x_offset
+
 
     return [elbow_x, elbow_y, -elbow_z]
 

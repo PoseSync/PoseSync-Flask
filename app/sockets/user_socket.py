@@ -18,7 +18,8 @@ from app.shared.global_state import (
     current_user_bone_lengths,
     client_sid,
     counter,
-    reset_globals, initialize_exercise_counter
+    reset_globals, initialize_exercise_counter,
+    is_exist
 )
 # 가속도 계산
 from app.util.calculate_landmark_accerlation import calculate_acceleration
@@ -188,8 +189,17 @@ def register_user_socket(socketio):
                     if fall and not fall_detected:
                         print("##########  낙상 감지 ##########")
                         fall_detected = True
-                        # 전화 걸기
-                        call_user()
+
+                        wait_time = 30  # 30초 대기
+                        interval = 1    # 1초 간격으로 확인
+
+                        for _ in range(wait_time):
+                            if not is_exist:
+                                print("사람이 없어졌습니다. 호출 중단.")
+                                break
+                            time.sleep(interval)
+                        else:
+                            call_user()
 
             # 사람 중심 좌표계로 변환 및 정규화
             transformed_landmarks, transform_data = process_pose_landmarks(landmarks)
@@ -281,9 +291,9 @@ def register_user_socket(socketio):
             next_set = get_next_exercise_set(updated_exercise_set.id)
 
             # 다음 운동 세트가 있다면 True, 없으면 False
-            is_last = False
+            is_last = True
             if next_set:
-                is_last = True
+                is_last = False
 
             # 끝난 운동 세트의 정보 클라이언트로 전송
             if updated_exercise_set:
