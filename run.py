@@ -14,6 +14,8 @@ from flask_cors import CORS
 
 from app.controllers.body_analysis_controller import body_analysis_bp
 
+from app.shared.global_state import is_exist
+
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins='*')
@@ -174,6 +176,14 @@ def get_exercise_set():
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
 
+# 낙상감지 후 클라이언트가 화면에서 나갈 때 호출
+@app.route('/disconnect_call', methods=['POST'])
+def disconnect_call():
+    is_exist = False
+
+    return jsonify({
+        "msg": "전화 서비스를 중단합니다."
+    }), 200
 
 if __name__ == '__main__':
     socketio.run(app, host='127.0.0.1', port=5001, debug=True, allow_unsafe_werkzeug=True)
