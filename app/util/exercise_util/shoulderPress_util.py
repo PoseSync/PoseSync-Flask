@@ -5,15 +5,15 @@ from app.util.math_util import normalize_vector, vector_angle_deg
 # 상완 타입별
 POSE_GUIDELINE_BY_ARM_TYPE = {
     "LONG": {
-        "forward_angle": 12.5,    # 전방각(고정)
+        "forward_angle": 10,    # 전방각(고정)
         "elbow_min_angle": 100.0   # 팔꿈치 최소각도
     },
     "AVG": {
-        "forward_angle": 10.5,
+        "forward_angle": 7,
         "elbow_min_angle": 90
     },
     "SHORT": {
-        "forward_angle": 7.5,
+        "forward_angle": 5,
         "elbow_min_angle": 80
     }
 }
