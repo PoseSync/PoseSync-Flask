@@ -5,18 +5,18 @@ from app.util.math_util import normalize_vector, vector_angle_deg
 # 상완 타입별 바벨컬 가이드라인
 BARBELL_CURL_GUIDELINE_BY_ARM_TYPE = {
     "LONG": {
-        "grip_width_ratio": 1.15,  # 어깨 너비의 1.1배
-        "min_forearm_angle": 30.0,  # 전완-상완 최소 각도
+        "grip_width_ratio": 1.3,  # 어깨 너비의 1.1배
+        "min_forearm_angle": 20.0,  # 전완-상완 최소 각도
         "torso_arm_angle": 3.0  # 몸통-상완 각도
     },
     "AVG": {
-        "grip_width_ratio": 1.1,
-        "min_forearm_angle": 25.0,
+        "grip_width_ratio": 1.2,
+        "min_forearm_angle": 15.0,
         "torso_arm_angle": 8.0
     },
     "SHORT": {
-        "grip_width_ratio": 1.05,
-        "min_forearm_angle": 20.0,
+        "grip_width_ratio": 1.1,
+        "min_forearm_angle": 10.0,
         "torso_arm_angle": 12.0
     }
 }
@@ -24,10 +24,8 @@ BARBELL_CURL_GUIDELINE_BY_ARM_TYPE = {
 
 def calculate_elbow_position_for_barbell_curl(
         shoulder_coord: list,
-        hip_coord: list,
-        torso_arm_angle: float,
         upper_arm_length: float,
-        side: str = "right"
+        arm_type: str = "AVG"  # arm_type 매개변수 추가
 ) -> list:
     """
 
@@ -54,7 +52,7 @@ def calculate_elbow_position_for_barbell_curl(
     # Z축: 바벨컬에서는 팔을 앞으로 약간 내밀다가 구부림
     elbow_z = shoulder_z + upper_arm_length * math.sin(angle_rad)
 
-    x_offset = -0.02
+    x_offset = 0.035 # 양수로 갈수록 팔꿈치 벌어짐 음수로 갈수록 모아짐
     # X 좌표: 어깨와 동일한 위치 유지
     elbow_x = shoulder_x + x_offset
 
@@ -68,7 +66,7 @@ def calculate_wrist_position_for_barbell_curl(
         shoulder_coord: list,  # 어깨 좌표
         forearm_length: float,
         arm_type: str,
-        side: str = "right"
+        shoulder_width: float,  # 어깨 너비 추가
 ) -> list:
     """
     바벨컬을 위한 손목 위치 계산
@@ -109,10 +107,15 @@ def calculate_wrist_position_for_barbell_curl(
 
     # ✅ 손목 Z 좌표: 바벨컬에서는 몸 쪽으로 당겨짐
     # 각도가 클수록 더 많이 구부러져서 몸 쪽으로
-    wrist_z = elbow_z - forearm_length * math.sin(angle_rad)
+    wrist_z = elbow_z - forearm_length * math.sin(angle_rad) + 0.08
 
-    # ✅ 손목 X 좌표: 어깨 X 좌표에 그립 비율 적용 (자동 좌우 대칭)
-    wrist_x = shoulder_x * grip_width_ratio
+    # 어깨 너비 기반 그립 오프셋
+    grip_offset = shoulder_width * 0.5 * grip_width_ratio
+
+    # 오른쪽 어깨에서 바깥쪽으로 오프셋만큼
+    wrist_x = shoulder_x + grip_offset
+
+    print(f' 어깨x : {shoulder_x} 손목 x {wrist_x}')
 
     return [wrist_x, wrist_y, wrist_z]
 

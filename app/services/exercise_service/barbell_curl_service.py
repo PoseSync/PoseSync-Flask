@@ -45,21 +45,18 @@ def process_barbell_curl(data):
     # 1. 오른팔 팔꿈치 위치 계산
     right_elbow_pos = calculate_elbow_position_for_barbell_curl(
         shoulder_coord=[right_shoulder['x'], right_shoulder['y'], right_shoulder['z']],
-        hip_coord=[right_hip['x'], right_hip['y'], right_hip['z']],
-        current_elbow_coord=[right_elbow['x'], right_elbow['y'], right_elbow['z']],
-        arm_type=arm_type,
         upper_arm_length=upper_arm_length,
-        side="right"
+        arm_type=arm_type,
     )
 
-    # 2. 오른팔 손목 위치 계산
+    # 2. 오른팔 손목 위치 계산 (shoulder_width 추가)
     right_wrist_pos = calculate_wrist_position_for_barbell_curl(
         elbow_coord=right_elbow_pos,
         current_wrist_coord=[right_wrist['x'], right_wrist['y'], right_wrist['z']],
-        shoulder_coord=[right_shoulder['x'], right_shoulder['y'], right_shoulder['z']],  # ✅ 추가
+        shoulder_coord=[right_shoulder['x'], right_shoulder['y'], right_shoulder['z']],
         forearm_length=forearm_length,
         arm_type=arm_type,
-        side="right"
+        shoulder_width=shoulder_width  # ✅ 어깨 너비 전달
     )
 
     # 3. 왼팔 대칭 위치 생성
