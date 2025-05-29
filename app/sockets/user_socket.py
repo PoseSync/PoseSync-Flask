@@ -1,5 +1,4 @@
 import time
-from turtle import Turtle
 
 import numpy as np
 from flask import request
@@ -53,7 +52,7 @@ def register_user_socket(socketio):
         global is_first, fall_detected, client_sid
 
         client_sid = request.sid
-
+        print('모니터 뻘 호출')
         try:
             landmarks = data.get('landmarks', [])
             request_id = data.get('requestId')
@@ -69,7 +68,7 @@ def register_user_socket(socketio):
                 if len(accel_seq_buffer) >= 30:
                     model_input = np.array(list(accel_seq_buffer)[-30:]).reshape(1, 30, 6)
                     prediction = fall_model.predict(model_input, verbose=0)
-                    fall = bool(prediction[0][0] > 0.8)
+                    fall = bool(prediction[0][0] > 0.95)
 
                     print(f"낙상 감지 예측값: {prediction[0][0]}")
                     if fall and not fall_detected:
@@ -157,7 +156,7 @@ def register_user_socket(socketio):
     def handle_exercise_data(data):
         global is_first, fall_detected, current_user_body_type, current_user_bone_lengths, client_sid
         start_time = time.perf_counter()
-
+        print('exercise_data 호출')
         # 현재 연결된 클라이언트의 SID 저장
         client_sid = request.sid
 
@@ -211,7 +210,7 @@ def register_user_socket(socketio):
                 if len(accel_seq_buffer) >= 30:
                     model_input = np.array(list(accel_seq_buffer)[-30:]).reshape(1, 30, 6)
                     prediction = fall_model.predict(model_input, verbose=0)
-                    fall = bool(prediction[0][0] > 0.8)
+                    fall = bool(prediction[0][0] > 0.95)
 
                     print(f"낙상 감지 예측값: {prediction[0][0]}")
                     if fall and not fall_detected:
@@ -329,11 +328,14 @@ def register_user_socket(socketio):
         print('disconnect_client: 패킷 호출됨')
 
         phone_number = data.get('phoneNumber')
+        print(f"disconnect_client: {phone_number} 연결 해제 요청")
         # 지금까지 한 운동 횟수
         current_count = data.get('count')
+        print(f"disconnect_client: 현재 운동 횟수: {current_count}")
 
         # 받아온 phoneNumber로 ExerciseSet 객체 GET
         exercise_set = get_exercise_set(phone_number)
+        print(f"disconnect_client: exercise_set: {exercise_set}")
 
         # exercise_set이 None이 아닌 경우에만 업데이트 수행
         if exercise_set:
@@ -351,6 +353,7 @@ def register_user_socket(socketio):
 
             # UPDATE된 updated_exercise_set 객체, 다음 운동 몇번째 세트인지 GET
             updated_exercise_set, set_number = save_updated_exercise_set(exercise_set)
+            print(f"disconnect_client: updated_exercise_set: {updated_exercise_set}")
 
             # 인덱스는 0부터 시작이므로 +1, 만약 다음 운동이 없다면 +1을 한 결과, set_number = 0이 됨.
             set_number = int(set_number) + 1
@@ -367,6 +370,7 @@ def register_user_socket(socketio):
             if updated_exercise_set:
                 # 다음 운동 데이터가 없다면 => 다음 운동 관련 데이터는 다 null로 주고, is_last는 True 전달
                 if is_last:
+                    print(f"✅ 다음 운동 세트가 없습니다: {phone_number}")
                     socketio.emit('next', {
                     # 다음 운동 세트 번호
                     "set_number": None,
@@ -381,6 +385,7 @@ def register_user_socket(socketio):
                 }, to=client_sid)
                 # 다음 운동 데이터가 있을 경우
                 else:
+                    print(f"✅ 다음 운동 세트가 있습니다: {phone_number}, set_number: {set_number}, next_set: {next_set}")
                     socketio.emit('next', {
                     # 다음 운동 세트 번호
                     "set_number": set_number,
