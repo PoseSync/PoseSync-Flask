@@ -201,7 +201,8 @@ def save_exercise_result():
         return jsonify({
             "next_weight": None,
             "next_target_count": None,
-            "is_last": True
+            "is_last": True,
+            "count": 0
         }), 200
     # 현재 끝난 운동이 마지막이 아니라면, 즉 is_last가 False라면?
     # is_last를 False로 전송하고 나머지 field는 다음 운동 데이터 전송
@@ -209,7 +210,8 @@ def save_exercise_result():
         return jsonify({
             "next_weight": next_set.exercise_weight,
             "next_target_count": next_set.target_count,
-            "is_last": False
+            "is_last": False,
+            "count": 0
         }), 200
     # 그 외 오류
     else:
