@@ -344,7 +344,7 @@ def register_user_socket(socketio):
             exercise_set.is_finished = True
             # 목표 운동 횟수 채우지 않았다면 실패한 운동 세트
             if exercise_set.current_count < exercise_set.target_count:
-                exercise_set.is_success = False
+                exercise_set.is_success = True
             # 목표 운동 횟수를 채웠다면 성공한 운동 세트
             else:
                 exercise_set.is_success = True

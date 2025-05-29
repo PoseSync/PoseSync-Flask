@@ -5,7 +5,7 @@ from app.models import db, User  # models/__init__.py에서 정의한 db
 import config
 from sqlalchemy import inspect
 from app.controllers.user_controller import save_body_data, body_data_bp
-from app.services.user_info_service import save_phone_number_and_height, save_exercise_set_service, get_exercise_set_service, is_user_exist, get_next_exercise_set
+from app.services.user_info_service import save_phone_number_and_height, save_exercise_set_service, get_exercise_set_service, is_user_exist, get_next_exercise_set, save_updated_exercise_set
 from app.models.exercise_set import ExerciseSet
 
 from app.models.user import User
@@ -161,6 +161,29 @@ def save_exercise_set():
             })
     db.session.commit()
     return jsonify(results), 201
+
+@app.route('/save_exercise_result', methods=['POST'])
+def save_exercise_result(data):
+    phone_number = data.get('phone_number')
+    count = data.get('count')
+
+    exercise_set = get_exercise_set(phone_number)
+    exercise_set.current_count = count
+
+    exercise_set.is_finished = True
+    if exercise_set.current_count < exercise_set.target_count:
+        exercise_set.is_success = False
+    # 목표 운동 횟수를 채웠다면 성공한 운동 세트
+    else:
+        exercise_set.is_success = True
+
+    updated_exercise_set, set_number = save_updated_exercise_set(exercise_set)
+
+    if updated_exercise_set:
+        return jsonify({
+            
+        })
+
 
 @app.route('/get_exercise_set', methods=['GET'])
 def get_exercise_set():
