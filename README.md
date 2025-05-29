@@ -1,7 +1,5 @@
 # 🏋️ PoseSync
 
-
-
 &nbsp;
 ## 🔧 Tech Stack
 <p>
