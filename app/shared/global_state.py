@@ -15,6 +15,10 @@ current_user_bone_lengths = None  # ✅ 새로 추가
 client_sid = None  # 현재 연결된 클라이언트의 세션 ID
 counter = None # 운동 카운터 인스턴스 - 전역으로 관리
 
+# 전화 지연을 계속할지 아니면 전화 서비스를 호출하지 않을지
+# true => 30초동안 기다림. false => 전화 서비스를 호출하지 않음.
+is_exist = True
+
 
 def initialize_exercise_counter(exercise_type: str):
     """
@@ -63,6 +67,8 @@ def reset_globals():
     current_user_body_type    = None
     current_user_bone_lengths = None
     client_sid = None
+
+    is_exist = True
 
     # 카운터 값만 리셋
     if counter:

@@ -8,12 +8,11 @@ from app.util.exercise_util.barbell_curl_util import (
 import app.shared.global_state as global_state
 
 
-
 def process_barbell_curl(data):
     """
     바벨컬 가이드라인 생성 서비스
     - 오른팔을 기준으로 계산 후 왼팔 대칭 적용
-    - 팔꿈치 → 손목 순서로 위치 계산
+    - 바벨컬은 대칭 운동이므로 원래 로직 유지
     """
     landmarks = data.get("landmarks", [])
     bone_lengths = data.get("bone_lengths", {})
@@ -40,27 +39,24 @@ def process_barbell_curl(data):
 
     # 어깨 너비 및 팔 길이 (DB에서는 좌우 구분 없이 평균값으로 저장됨)
     shoulder_width = bone_lengths.get("shoulder_width", 0.4)
-    upper_arm_length = bone_lengths.get("upper_arm_length", 0.3)  # 좌우 평균값
-    forearm_length = bone_lengths.get("forearm_length", 0.25)     # 좌우 평균값
+    upper_arm_length = bone_lengths.get("left_upper_arm_length", 0.3)  # 좌우 평균값
+    forearm_length = bone_lengths.get("left_forearm_length", 0.25)     # 좌우 평균값
 
     # 1. 오른팔 팔꿈치 위치 계산
     right_elbow_pos = calculate_elbow_position_for_barbell_curl(
         shoulder_coord=[right_shoulder['x'], right_shoulder['y'], right_shoulder['z']],
-        hip_coord=[right_hip['x'], right_hip['y'], right_hip['z']],
-        current_elbow_coord=[right_elbow['x'], right_elbow['y'], right_elbow['z']],
+        upper_arm_length=upper_arm_length,
         arm_type=arm_type,
-        upper_arm_length=upper_arm_length,  # 평균값 사용
-        side="right"
     )
 
-    # 2. 오른팔 손목 위치 계산
+    # 2. 오른팔 손목 위치 계산 (shoulder_width 추가)
     right_wrist_pos = calculate_wrist_position_for_barbell_curl(
         elbow_coord=right_elbow_pos,
         current_wrist_coord=[right_wrist['x'], right_wrist['y'], right_wrist['z']],
-        shoulder_width=shoulder_width,
-        forearm_length=forearm_length,  # 평균값 사용
+        shoulder_coord=[right_shoulder['x'], right_shoulder['y'], right_shoulder['z']],
+        forearm_length=forearm_length,
         arm_type=arm_type,
-        side="right"
+        shoulder_width=shoulder_width  # ✅ 어깨 너비 전달
     )
 
     # 3. 왼팔 대칭 위치 생성
