@@ -5,15 +5,15 @@ from app.util.math_util import normalize_vector, vector_angle_deg
 # 상완 타입별
 POSE_GUIDELINE_BY_ARM_TYPE = {
     "LONG": {
-        "forward_angle": 12.5,    # 전방각(고정)
+        "forward_angle": 10,    # 전방각(고정)
         "elbow_min_angle": 100.0   # 팔꿈치 최소각도
     },
     "AVG": {
-        "forward_angle": 10.5,
+        "forward_angle": 7,
         "elbow_min_angle": 90
     },
     "SHORT": {
-        "forward_angle": 7.5,
+        "forward_angle": 5,
         "elbow_min_angle": 80
     }
 }
@@ -53,7 +53,7 @@ def calculate_elbow_position_by_forward_angle(
   if height_diff < min_height_diff:
       elbow_y = shoulder_y + min_height_diff
       height_diff = elbow_y - shoulder_y
-      print(f"⚠️ 최소 각도 보정 적용: {current_elbow_y:.3f} -> {elbow_y:.3f}")
+
 
   # 2. 보정된 위치로 벡터 계산
   corrected_upper_arm_vector = np.array([
@@ -83,11 +83,11 @@ def calculate_elbow_position_by_forward_angle(
   # 6. 전방각 적용
   forward_angle_radians = math.radians(adjusted_forward_angle)
   x_offset = math.cos(forward_angle_radians) * horizontal_projection
-  z_offset = math.sin(forward_angle_radians) * horizontal_projection
+  z_offset = -math.sin(forward_angle_radians) * horizontal_projection
 
   # 7. 좌우 대칭 조정
-  x_adjustment = 0.03  # 이 값을 조정해서 양쪽 팔 위치 제어
-  z_adjustment = 0.001
+  x_adjustment = 0.11  # 이 값을 조정해서 양쪽 팔 위치 제어
+  z_adjustment = 0.000
   if side == "left":
       x_offset = -x_offset + x_adjustment
       z_offset = z_offset + z_adjustment
@@ -100,6 +100,7 @@ def calculate_elbow_position_by_forward_angle(
   elbow_z = shoulder_z + z_offset
 
   print(f'x_offset : {x_offset}, z_offset : {z_offset}')
+  print(f'왼쪽 어깨 좌표값 x : {shoulder_x} y : {shoulder_y} z : {shoulder_z}')
   print(f'최종 elbow_x : {elbow_x}, elbow_y : {elbow_y}, elbow_z : {elbow_z}')
 
   return [elbow_x, elbow_y, elbow_z]
