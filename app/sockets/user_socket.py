@@ -1,5 +1,4 @@
 import time
-from turtle import Turtle
 
 import numpy as np
 from flask import request
