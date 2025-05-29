@@ -1,5 +1,4 @@
 import time
-from turtle import Turtle
 
 import numpy as np
 from flask import request
@@ -20,7 +19,7 @@ from app.shared.global_state import (
     client_sid,
     counter,
     reset_globals, initialize_exercise_counter,
-    is_exist, stop_monitoring
+    is_exist
 )
 # 가속도 계산
 from app.util.calculate_landmark_accerlation import calculate_acceleration
@@ -50,93 +49,71 @@ def register_user_socket(socketio):
     # 운동 사이 쉬는 시간에도 낙상 감지
     @socketio.on('monitor_fall')
     def monitor_fall(data):
-        global is_first, fall_detected, client_sid
+        global is_first, fall_detected, client_sid, is_exist
 
+        # 현재 연결된 클라이언트의 SID 저장
         client_sid = request.sid
 
         try:
+            # 클라이언트에서 받은 원본 랜드마크 데이터
             landmarks = data.get('landmarks', [])
             request_id = data.get('requestId')
 
             fall = False
+            print(f'클라이언트에서 받자마자 => {data}')
 
-            # 가속도 계산 및 낙상 감지 로직
+            # 1. 가속도 계산 및 시퀀스 버퍼에 누적
             acceleration = calculate_acceleration(landmarks)
             if acceleration:
+                # head와 pelvis의 평균 가속도를 [x, y, z]
                 vec = acceleration["head_acceleration"] + acceleration["pelvis_acceleration"]
                 accel_seq_buffer.append(vec)
 
+                print(f"[{time.time()}] ✅ accel 추가됨, 현재 길이: {len(accel_seq_buffer)}")
+
+                # 버퍼가 30개 이상일 때 매 프레임마다 예측 수행
                 if len(accel_seq_buffer) >= 30:
                     model_input = np.array(list(accel_seq_buffer)[-30:]).reshape(1, 30, 6)
                     prediction = fall_model.predict(model_input, verbose=0)
+                    # 임계값 0.8로 수정해서 낙상 감지 기준을 더 빡빡하게
+
                     fall = bool(prediction[0][0] > 0.8)
 
-                    print(f"낙상 감지 예측값: {prediction[0][0]}")
+                    print(f"예측값: {prediction[0][0]}")
                     if fall and not fall_detected:
-                        print("########## 🚨 낙상 감지 🚨 ##########")
+                        print("##########  낙상 감지 ##########")
                         fall_detected = True
 
-                        # ✅ 새로운 낙상 감지 시 이전 중단 신호 초기화
-                        stop_monitoring.clear()
-                        print("🔄 새로운 낙상 감지로 인한 모니터링 재시작")
+                        wait_time = 30  # 30초 대기
+                        interval = 1    # 1초 간격으로 확인
 
-                        # ✅ 낙상 감지 알림을 즉시 전송 (한 번만)
-                        result = {
-                            'requestId': request_id,
-                            'is_fall': True
-                        }
-                        socketio.emit('result', result, to=client_sid)
-                        print(f'🚨 낙상 감지 알림 전송 => {result}')
-
-                        wait_time = 30
-                        interval = 1
-
-                        # 30초 대기 로직 (emit 없이 대기만)
-                        for i in range(wait_time):
-                            # Event가 설정되었는지 확인 (non-blocking)
-                            if stop_monitoring.is_set():
+                        for _ in range(wait_time):
+                            if not is_exist:
                                 print("사람이 없어졌습니다. 호출 중단.")
-                                print(f"########## 모니터링 중단됨 #############")
-
-                                fall_detected = False           # 반드시 False 로
-                                stop_monitoring.clear()  # (권장) Event 재사용 준비
-
-                                # ✅ 취소 시에만 추가 emit (낙상 상태 해제)
-                                cancel_result = {
-                                    'requestId': request_id,
-                                    'is_fall': False
-                                }
-                                socketio.emit('result', cancel_result, to=client_sid)
-                                print(f'🚨 낙상 취소 알림 전송 => {cancel_result}')
-                                return
-
-                            socketio.sleep(interval)
-                            print(f'{i + 1}초 대기 중...')
-
-                        fall_detected = False
-
-                        # 여전히 모니터링 중이면 전화 걸기
-                        if not stop_monitoring.is_set():
+                                is_exist = True
+                                break
+                            time.sleep(interval)
+                        else:
                             print("############# 전화 걸기 ###############")
-                            # call_user()
-                            print('📞📞📞📞📞📞전화 걸기 완료')
+                            call_user()
 
-                        # ✅ 낙상 처리 완료 후 return (추가 emit 방지)
-                        return
+            result = {}
 
-            # ✅ 일반적인 경우 (낙상이 아닌 경우)의 결과 전송
-            # 클라이언트의 fallDetected 상태 동기화를 위해 필요
-            result = {
-                'requestId': request_id,
-                'is_fall': False  # 평상시에는 항상 False
-            }
+            # 중요: requestId를 결과에 포함
+            result['requestId'] = request_id
+
+            # 낙상여부를 반환 데이터에 추가, true/false 값
+            result['is_fall'] = fall
+
+            # 결과 전송
+            print(f'클라이언트에게 전송 => {result}')
             socketio.emit('result', result, to=client_sid)
 
         except Exception as e:
-            print(f"❌ 낙상 감지 데이터 처리 중 예외 발생: {e}")
+            print(f"❌ 데이터 처리 중 예외 발생: {e}")
             import traceback
             traceback.print_exc()
-            emit('result', {'error': '낙상 감지 서버 내부 오류가 발생했습니다.'})
+            emit('result', {'error': '서버 내부 오류가 발생했습니다.'})
 
     @socketio.on('disconnect_monitor')
     def disconnect_monitor(data):
@@ -153,20 +130,23 @@ def register_user_socket(socketio):
         reset_globals()
         print(f'🧹 연결 해제됨: {phone_number}')
 
+
     @socketio.on('exercise_data')
     def handle_exercise_data(data):
-        global is_first, fall_detected, current_user_body_type, current_user_bone_lengths, client_sid
+        global is_first, fall_detected, current_user_body_type, current_user_bone_lengths, client_sid, is_exist
         start_time = time.perf_counter()
 
         # 현재 연결된 클라이언트의 SID 저장
         client_sid = request.sid
+
+        result = {}
 
         try:
             # 클라이언트에서 받은 원본 랜드마크 데이터
             landmarks = data.get('landmarks', [])
             phone_number = data.get('phoneNumber')
             exercise_type = data.get('exerciseType')
-            request_id = data.get('requestId')
+
 
             # 첫 데이터 패킷일 때만 body_type과 뼈길이 데이터 가져오기
             if is_first:
@@ -200,6 +180,8 @@ def register_user_socket(socketio):
 
             fall = False
 
+            # print(f'클라이언트에서 받자마자 => {data}')
+
             # 1. 가속도 계산 및 시퀀스 버퍼에 누적
             acceleration = calculate_acceleration(landmarks)
             if acceleration:
@@ -207,71 +189,47 @@ def register_user_socket(socketio):
                 vec = acceleration["head_acceleration"] + acceleration["pelvis_acceleration"]
                 accel_seq_buffer.append(vec)
 
+                # print(f"[{time.time()}] ✅ accel 추가됨, 현재 길이: {len(accel_seq_buffer)}")
+
                 # 버퍼가 30개 이상일 때 매 프레임마다 예측 수행
                 if len(accel_seq_buffer) >= 30:
                     model_input = np.array(list(accel_seq_buffer)[-30:]).reshape(1, 30, 6)
                     prediction = fall_model.predict(model_input, verbose=0)
+                    # 임계값 0.8로 수정해서 낙상 감지 기준을 더 빡빡하게
+
                     fall = bool(prediction[0][0] > 0.8)
 
-                    print(f"낙상 감지 예측값: {prediction[0][0]}")
+                    print(f"예측값: {prediction[0][0]}")
                     if fall and not fall_detected:
-                        print("########## 🚨 낙상 감지 🚨 ##########")
+                        print("##########  낙상 감지 ##########")
                         fall_detected = True
 
-                        # ✅ 새로운 낙상 감지 시 이전 중단 신호 초기화
-                        stop_monitoring.clear()
-                        print("🔄 새로운 낙상 감지로 인한 모니터링 재시작")
+                        wait_time = 30  # 30초 대기
+                        interval = 1    # 1초 간격으로 확인
 
-                        # ✅ 낙상 감지 알림을 즉시 전송 (한 번만)
-                        fall_result = {
-                            'requestId': request_id,
-                            'is_fall': True
-                        }
-                        print(f'🚨 [EXERCISE_DATA] 낙상 감지! client_sid: {client_sid}, requestId: {request_id}')
-                        socketio.emit('result', fall_result, to=client_sid)
-                        print(f'🚨 [EXERCISE_DATA] 낙상 감지 알림 전송 완료 => {fall_result}')
+                        result['is_fall'] = fall
+                        socketio.emit('result', result, to=client_sid)
+                        socketio.sleep(1)
+                        print(f'클라이언트에게 낙상 감지 알림 전송 => {result}')
+                        for _ in range(wait_time):
 
-                        # 즉시 flush하여 전송 보장
-                        socketio.sleep(0.1)
-
-                        wait_time = 30
-                        interval = 1
-
-                        # 30초 대기 로직 (emit 없이 대기만)
-                        for i in range(wait_time):
-                            # Event가 설정되었는지 확인 (non-blocking)
-                            if stop_monitoring.is_set():
+                            if not is_exist:
                                 print("사람이 없어졌습니다. 호출 중단.")
-                                print(f"########## 모니터링 중단됨 #############")
-
-                                fall_detected = False  # 반드시 False 로
-                                stop_monitoring.clear()  # (권장) Event 재사용 준비
-
-                                # ✅ 취소 시에만 추가 emit (낙상 상태 해제)
-                                cancel_result = {
-                                    'requestId': request_id,
-                                    'is_fall': False
-                                }
-                                print(f'🚨 [EXERCISE_DATA] 낙상 취소! requestId: {request_id}')
-                                socketio.emit('result', cancel_result, to=client_sid)
-                                print(f'🚨 [EXERCISE_DATA] 낙상 취소 알림 전송 완료 => {cancel_result}')
+                                disconnect(sid=client_sid)
                                 return
+                            time.sleep(interval)
+                            print(f'{interval}초 대기 중...')
 
-                            socketio.sleep(interval)
-                            print(f'{i + 1}초 대기 중...')
-
+                        # 🔥 핵심: 낙상 감지 로직 완료 후 상태 초기화
                         fall_detected = False
 
-                        # 여전히 모니터링 중이면 전화 걸기
-                        if not stop_monitoring.is_set():
+                        if is_exist:
                             print("############# 전화 걸기 ###############")
-                            # call_user()
-                            print('📞📞📞📞📞📞전화 걸기 완료')
+                            call_user()
+                            print('전화 걸기 완료')
 
-                        # ✅ 낙상 처리 완료 후 return (추가 emit 방지)
-                        return
+                        is_exist = True
 
-            # ✅ 일반적인 운동 처리 로직 (낙상이 아닌 경우)
             # 사람 중심 좌표계로 변환 및 정규화
             transformed_landmarks, transform_data = process_pose_landmarks(landmarks)
 
@@ -282,6 +240,9 @@ def register_user_socket(socketio):
             # id → name 필드 보강
             for lm in data['landmarks']:
                 lm['name'] = PoseLandmark(lm['id']).name
+
+            # requestId 추출
+            request_id = data.get('requestId')
 
             # 컨트롤러에서 데이터 처리 (가이드라인 생성)
             result = handle_data_controller(data)
@@ -302,14 +263,14 @@ def register_user_socket(socketio):
             # 중요: requestId를 결과에 포함
             result['requestId'] = request_id
 
-            # ✅ 낙상여부를 반환 데이터에 추가 (평상시에는 항상 False)
-            result['is_fall'] = False
+            # 낙상여부를 반환 데이터에 추가, true/false 값
+            result['is_fall'] = fall
 
             # 클라이언트에서 사용하지 않는 데이터 바로 삭제
             del result['landmarks']  # 원본 변환 랜드마크 제거 (네트워크 부하 감소)
             del result['__transformData']  # 변환 데이터 삭제
-            del result['body_type']  # 체형 데이터 삭제
-            del result['bone_lengths']  # 뼈 길이 데이터 삭제
+            del result['body_type'] # 체형 데이터 삭제
+            del result['bone_lengths'] # 뼈 길이 데이터 삭제
 
             # 결과 전송
             print(f'클라이언트에게 전송 => {result}')
