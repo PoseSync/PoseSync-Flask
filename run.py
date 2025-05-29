@@ -162,6 +162,10 @@ def save_exercise_set():
     db.session.commit()
     return jsonify(results), 201
 
+# 비상용 API
+# 한 운동 세트 끝나고 phone_number와 count를 HTTP body로 넘겨줌.
+# -> phone_number로 exercise_set 조사 후 객체 값 수정 후 DB에 UPDATE 후 저장
+# DB에 업데이트한 exercise_set 필드값을 JSON 형태로 클라이언트에 전송
 @app.route('/save_exercise_result', methods=['POST'])
 def save_exercise_result(data):
     phone_number = data.get('phone_number')
@@ -181,8 +185,15 @@ def save_exercise_result(data):
 
     if updated_exercise_set:
         return jsonify({
-            
-        })
+            "exercise_weight": updated_exercise_set.exercise_weight,
+            "exercise_type": updated_exercise_set.exercise_type,
+            "target_count": updated_exercise_set.target_count,
+            "is_success": updated_exercise_set.is_success
+        }), 200
+    else:
+        return jsonify({
+            "msg": "저장된 데이터가 없습니다."
+        }), 400
 
 
 @app.route('/get_exercise_set', methods=['GET'])
