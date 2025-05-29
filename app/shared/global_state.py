@@ -47,8 +47,8 @@ def initialize_exercise_counter(exercise_type: str):
             anchor_id   = PoseLandmark.RIGHT_ELBOW,
             moving_id   = PoseLandmark.RIGHT_WRIST,
             axis        = 'y',
-            down_offset = 0.2,
-            up_offset   = 0.15,
+            down_offset = 0.1,
+            up_offset   = 0.1,
             initial_state="down"
         )
 

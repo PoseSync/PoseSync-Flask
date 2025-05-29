@@ -1,5 +1,6 @@
 from app.services.exercise_service.barbell_curl_service import process_barbell_curl
 from app.services.exercise_service.shoulder_press_service import process_dumbbell_shoulderPress
+from app.services.exercise_service.side_lateral_raise_service import process_side_lateral_raise
 from app.services.user_info_service import save_user_and_body_data_and_body_type
 from flask import Blueprint, jsonify, request
 
@@ -11,6 +12,9 @@ def handle_data_controller(data):
         return result
     elif data.get('exerciseType') == 'barbell_curl':  # 바벨 컬
         result = process_barbell_curl(data)
+        return result
+    elif data.get('exerciseType') == 'side_lateral_raise':
+        result = process_side_lateral_raise(data)
         return result
 
 
