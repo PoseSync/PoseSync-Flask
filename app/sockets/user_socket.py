@@ -121,7 +121,7 @@ def register_user_socket(socketio):
 
     @socketio.on('exercise_data')
     def handle_exercise_data(data):
-        global is_first, fall_detected, current_user_body_type, current_user_bone_lengths, client_sid
+        global is_first, fall_detected, current_user_body_type, current_user_bone_lengths, client_sid, is_exist
         start_time = time.perf_counter()
 
         # 현재 연결된 클라이언트의 SID 저장
