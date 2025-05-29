@@ -1,5 +1,5 @@
 # app/shared/global_state.py
-
+import threading
 from collections import deque
 from app.util.pose_landmark_enum import PoseLandmark
 from app.util.rep_counter import RepCounter
@@ -18,6 +18,9 @@ counter = None # 운동 카운터 인스턴스 - 전역으로 관리
 # 전화 지연을 계속할지 아니면 전화 서비스를 호출하지 않을지
 # true => 30초동안 기다림. false => 전화 서비스를 호출하지 않음.
 is_exist = True
+
+# threading.Event로 변경 (더 안전한 방법)
+stop_monitoring = threading.Event()
 
 
 def initialize_exercise_counter(exercise_type: str):
@@ -79,6 +82,9 @@ def reset_globals():
     client_sid = None
 
     is_exist = True
+
+    # Event 초기화
+    stop_monitoring.clear()
 
     # 카운터 값만 리셋
     if counter:

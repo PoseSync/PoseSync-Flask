@@ -14,8 +14,7 @@ from flask_cors import CORS
 
 from app.controllers.body_analysis_controller import body_analysis_bp
 
-from app.shared.global_state import is_exist
-
+from app.shared.global_state import is_exist, stop_monitoring, fall_detected
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins='*')
@@ -177,12 +176,29 @@ def get_exercise_set():
         return jsonify({"error": str(e)}), 404
 
 # 낙상감지 후 클라이언트가 화면에서 나갈 때 호출
+# @app.route('/disconnect_call', methods=['POST'])
+# def disconnect_call():
+#     global is_exist, fall_detected
+#     is_exist = False
+#     fall_detected = False  # 낙상 감지 상태도 초기화
+#     print(f"‼️‼️‼️‼️‼️ ‼️‼️‼️️️️️")
+#     print(f"########## is_exist = {is_exist}로 변경 #############")
+#
+#     return jsonify({
+#         "msg": "전화 서비스를 중단합니다."
+#     }), 200
+
+# run.py의 disconnect_call API
 @app.route('/disconnect_call', methods=['POST'])
 def disconnect_call():
-    global is_exist, fall_detected
-    is_exist = False
-    fall_detected = False  # 낙상 감지 상태도 초기화
-    print("########## is_exist = False로 변경 #############")
+    global fall_detected
+
+    # Event를 설정하여 모니터링 중단 신호
+    stop_monitoring.set()
+    fall_detected = False
+
+    print(f"‼️‼️‼️‼️‼️ 모니터링 중단 신호 전송")
+    print(f"########## stop_monitoring.set() 호출 #############")
 
     return jsonify({
         "msg": "전화 서비스를 중단합니다."
