@@ -179,7 +179,9 @@ def get_exercise_set():
 # 낙상감지 후 클라이언트가 화면에서 나갈 때 호출
 @app.route('/disconnect_call', methods=['POST'])
 def disconnect_call():
+    global is_exist
     is_exist = False
+    print("########## is_exist = False로 변경 #############")
 
     return jsonify({
         "msg": "전화 서비스를 중단합니다."
