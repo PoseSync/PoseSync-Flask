@@ -104,7 +104,7 @@ def save_updated_exercise_set(exercise_set:ExerciseSet):
     return exercise_set, latest_index
 
 # 전화번호로 해당 User와 가장 가까운 ExerciseSet 반환 함수
-def get_exercise_set(phone_number):
+def get_exercise_set_with_phone_number(phone_number):
     user = User.query.filter_by(phone_number=phone_number).first()
 
     # 최신 순으로 정렬  

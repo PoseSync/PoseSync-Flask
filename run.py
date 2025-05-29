@@ -5,7 +5,7 @@ from app.models import db, User  # models/__init__.py에서 정의한 db
 import config
 from sqlalchemy import inspect
 from app.controllers.user_controller import save_body_data, body_data_bp
-from app.services.user_info_service import save_phone_number_and_height, save_exercise_set_service, get_exercise_set_service, is_user_exist, get_next_exercise_set, save_updated_exercise_set
+from app.services.user_info_service import save_phone_number_and_height, save_exercise_set_service, get_exercise_set_service, is_user_exist, get_next_exercise_set, save_updated_exercise_set,get_exercise_set_with_phone_number
 from app.models.exercise_set import ExerciseSet
 
 from app.models.user import User
@@ -167,11 +167,12 @@ def save_exercise_set():
 # -> phone_number로 exercise_set 조사 후 객체 값 수정 후 DB에 UPDATE 후 저장
 # DB에 업데이트한 exercise_set 필드값을 JSON 형태로 클라이언트에 전송
 @app.route('/save_exercise_result', methods=['POST'])
-def save_exercise_result(data):
+def save_exercise_result():
+    data = request.get_json()
     phone_number = data.get('phone_number')
     count = data.get('count')
 
-    exercise_set = get_exercise_set(phone_number)
+    exercise_set = get_exercise_set_with_phone_number(phone_number)
     exercise_set.current_count = count
 
     exercise_set.is_finished = True
