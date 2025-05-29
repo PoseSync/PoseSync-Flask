@@ -5,7 +5,7 @@ from app.models import db, User  # models/__init__.py에서 정의한 db
 import config
 from sqlalchemy import inspect
 from app.controllers.user_controller import save_body_data, body_data_bp
-from app.services.user_info_service import save_phone_number_and_height, save_exercise_set_service, get_exercise_set_service, is_user_exist, get_next_exercise_set
+from app.services.user_info_service import save_phone_number_and_height, save_exercise_set_service, get_exercise_set_service, is_user_exist, get_next_exercise_set, save_updated_exercise_set,get_exercise_set_with_phone_number
 from app.models.exercise_set import ExerciseSet
 
 from app.models.user import User
@@ -161,6 +161,64 @@ def save_exercise_set():
             })
     db.session.commit()
     return jsonify(results), 201
+
+# 비상용 API
+# 한 운동 세트 끝나고 phone_number와 count를 HTTP body로 넘겨줌.
+# -> phone_number로 exercise_set 조사 후 객체 값 수정 후 DB에 UPDATE 후 저장
+# 다음 운동 데이터를 전달하는데 만약 있다면 is_last = False, 없다면 is_last = True
+@app.route('/save_exercise_result', methods=['POST'])
+def save_exercise_result():
+    data = request.get_json()
+    phone_number = data.get('phone_number')
+    count = data.get('count')
+
+    exercise_set = get_exercise_set_with_phone_number(phone_number)
+    exercise_set.current_count = count
+
+    exercise_set.is_finished = True
+    if exercise_set.current_count < exercise_set.target_count:
+        exercise_set.is_success = False
+    # 목표 운동 횟수를 채웠다면 성공한 운동 세트
+    else:
+        exercise_set.is_success = True
+
+    updated_exercise_set, set_number = save_updated_exercise_set(exercise_set)
+
+    # 인덱스는 0부터 시작이므로 +1, 만약 다음 운동이 없다면 +1을 한 결과, set_number = 0이 됨.
+    set_number = int(set_number) + 1
+
+    # 다음 운동 세트 가져오기, 다음 운동이 없다면 None 즉, null 반환
+    next_set = get_next_exercise_set(updated_exercise_set.id)
+
+    # 다음 운동 세트가 있다면 True, 없으면 False
+    is_last = True
+    if next_set:
+        is_last = False
+
+    # 현재 끝난 운동이 마지막이라면, 즉 is_last가 True라면?
+    # is_last를 제외한 나머지 field는 null값
+    if is_last:
+        return jsonify({
+            "next_weight": None,
+            "next_target_count": None,
+            "is_last": True,
+            "count": 0
+        }), 200
+    # 현재 끝난 운동이 마지막이 아니라면, 즉 is_last가 False라면?
+    # is_last를 False로 전송하고 나머지 field는 다음 운동 데이터 전송
+    elif not is_last:
+        return jsonify({
+            "next_weight": next_set.exercise_weight,
+            "next_target_count": next_set.target_count,
+            "is_last": False,
+            "count": 0
+        }), 200
+    # 그 외 오류
+    else:
+        return jsonify({
+            "msg": "서버 오류!"
+        }), 404
+
 
 @app.route('/get_exercise_set', methods=['GET'])
 def get_exercise_set():

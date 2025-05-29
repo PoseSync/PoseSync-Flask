@@ -1,5 +1,4 @@
 import time
-from turtle import Turtle
 
 import numpy as np
 from flask import request
@@ -9,7 +8,7 @@ from flask_socketio import emit, disconnect
 from app.ai.ai_model import fall_model
 from app.controllers.user_controller import handle_data_controller
 from app.services.body_service.body_spec_service import get_all_body_info
-from app.services.user_info_service import get_exercise_set, save_updated_exercise_set, get_next_exercise_set
+from app.services.user_info_service import get_exercise_set_with_phone_number, save_updated_exercise_set, get_next_exercise_set
 # 공유 전역 상태 가져오기
 from app.shared.global_state import (
     accel_seq_buffer,
@@ -333,7 +332,7 @@ def register_user_socket(socketio):
         current_count = data.get('count')
 
         # 받아온 phoneNumber로 ExerciseSet 객체 GET
-        exercise_set = get_exercise_set(phone_number)
+        exercise_set = get_exercise_set_with_phone_number(phone_number)
 
         # exercise_set이 None이 아닌 경우에만 업데이트 수행
         if exercise_set:
@@ -344,7 +343,7 @@ def register_user_socket(socketio):
             exercise_set.is_finished = True
             # 목표 운동 횟수 채우지 않았다면 실패한 운동 세트
             if exercise_set.current_count < exercise_set.target_count:
-                exercise_set.is_success = False
+                exercise_set.is_success = True
             # 목표 운동 횟수를 채웠다면 성공한 운동 세트
             else:
                 exercise_set.is_success = True
