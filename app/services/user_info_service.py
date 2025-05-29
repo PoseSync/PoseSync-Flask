@@ -75,8 +75,15 @@ def get_next_exercise_set(current_id):
 
 # ExerciseSet 엔티티를 받아 UPDATE 한 후 저장하는 함수
 def save_updated_exercise_set(exercise_set:ExerciseSet):
-    db.session.add(exercise_set)
-    db.session.commit()
+    try:
+        db.session.add(exercise_set)
+        print(f"ExerciseSet 업데이트: {exercise_set.id-1}, is_finished: {exercise_set.is_finished}, is_success: {exercise_set.is_success}")
+        db.session.commit()
+        print("✅ ExerciseSet 업데이트 성공")
+
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
     routine_group = exercise_set.routine_group
     
