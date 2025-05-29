@@ -196,6 +196,7 @@ def register_user_socket(socketio):
                         for _ in range(wait_time):
                             if not is_exist:
                                 print("사람이 없어졌습니다. 호출 중단.")
+                                is_exist = True
                                 break
                             time.sleep(interval)
                         else:
