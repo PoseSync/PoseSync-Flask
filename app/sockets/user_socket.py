@@ -49,7 +49,7 @@ def register_user_socket(socketio):
     # 운동 사이 쉬는 시간에도 낙상 감지
     @socketio.on('monitor_fall')
     def monitor_fall(data):
-        global is_first, fall_detected, client_sid
+        global is_first, fall_detected, client_sid, is_exist
 
         # 현재 연결된 클라이언트의 SID 저장
         client_sid = request.sid
@@ -83,8 +83,20 @@ def register_user_socket(socketio):
                     if fall and not fall_detected:
                         print("##########  낙상 감지 ##########")
                         fall_detected = True
-                        # 전화 걸기
-                        call_user()
+
+                        wait_time = 30  # 30초 대기
+                        interval = 1    # 1초 간격으로 확인
+
+                        for _ in range(wait_time):
+                            if not is_exist:
+                                print("사람이 없어졌습니다. 호출 중단.")
+                                is_exist = True
+                                break
+                            time.sleep(interval)
+                        else:
+                            print("############# 전화 걸기 ###############")
+                            call_user()
+
             result = {}
 
             # 중요: requestId를 결과에 포함
@@ -200,6 +212,7 @@ def register_user_socket(socketio):
                                 break
                             time.sleep(interval)
                         else:
+                            print("############# 전화 걸기 ###############")
                             call_user()
 
             # 사람 중심 좌표계로 변환 및 정규화
