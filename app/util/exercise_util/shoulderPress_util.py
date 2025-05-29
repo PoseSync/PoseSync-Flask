@@ -72,8 +72,6 @@ def calculate_elbow_position_by_forward_angle(
   elevation_angle_deg = vector_angle_deg(corrected_upper_arm_vector, corrected_xz_plane_vector)
   elbow_raise_ratio = min(elevation_angle_deg / 90.0, 1.0)
 
-  print(f'보정 후 elevation_angle_deg: {elevation_angle_deg:.2f}°, raise_ratio: {elbow_raise_ratio:.3f}')
-
   # 4. 전방각 계산
   adjusted_forward_angle = base_forward_angle * (1.0 - elbow_raise_ratio)
 
@@ -99,10 +97,6 @@ def calculate_elbow_position_by_forward_angle(
   elbow_x = shoulder_x + x_offset
   elbow_z = shoulder_z + z_offset
 
-  print(f'x_offset : {x_offset}, z_offset : {z_offset}')
-  print(f'왼쪽 어깨 좌표값 x : {shoulder_x} y : {shoulder_y} z : {shoulder_z}')
-  print(f'최종 elbow_x : {elbow_x}, elbow_y : {elbow_y}, elbow_z : {elbow_z}')
-
   return [elbow_x, elbow_y, elbow_z]
 
 def adjust_wrist_direction_to_preserve_min_angle(
@@ -123,6 +117,5 @@ def adjust_wrist_direction_to_preserve_min_angle(
 
     # 손목 위치 = 팔꿈치 + 수직방향 * 전완 길이
     wrist = elbow + vertical_dir * forearm_length
-    print(f'wrist: {wrist}')
 
     return wrist.tolist()

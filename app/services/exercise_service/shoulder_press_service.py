@@ -19,8 +19,6 @@ def process_dumbbell_shoulderPress(data):
     # bone_lengths와 body_type 사용
     arm_type = body_type.get("arm_type", "AVG")
 
-
-
     # 어깨좌표 [0] : 왼쪽 [1] : 오른쪽
     shoulders_coord = [
         landmarks[PoseLandmark.LEFT_SHOULDER],
@@ -31,36 +29,6 @@ def process_dumbbell_shoulderPress(data):
         landmarks[PoseLandmark.LEFT_ELBOW],
         landmarks[PoseLandmark.RIGHT_ELBOW]
     ]
-    # 손목 좌표
-    wrists = [
-        landmarks[PoseLandmark.LEFT_WRIST],
-        landmarks[PoseLandmark.RIGHT_WRIST]
-    ]
-
-    # 상완 벡터 (shoulder → elbow)
-    # upper_arm_vecs = []
-    # for side in [0, 1]:  # 0: left, 1: right
-    #     vec = np.array([
-    #         elbows_coord[side]['x'] - shoulders_coord[side]['x'],
-    #         elbows_coord[side]['y'] - shoulders_coord[side]['y'],
-    #         elbows_coord[side]['z'] - shoulders_coord[side]['z']
-    #     ])
-    #
-    # # 전완 벡터 (elbow → wrist)
-    # forearm_vecs = []
-    # for side in [0, 1]:
-    #     vec = np.array([
-    #         wrists[side]['x'] - elbows_coord[side]['x'],
-    #         wrists[side]['y'] - elbows_coord[side]['y'],
-    #         wrists[side]['z'] - elbows_coord[side]['z']
-    #     ])
-    #
-    # # 어깨 라인 벡터 (왼쪽 → 오른쪽)
-    # shoulder_line_vec = normalize_vector(np.array([
-    #     shoulders_coord[1]['x'] - shoulders_coord[0]['x'],
-    #     shoulders_coord[1]['y'] - shoulders_coord[0]['y'],
-    #     shoulders_coord[1]['z'] - shoulders_coord[0]['z']
-    # ]))
 
     # ✅ 양쪽 팔 각각 처리
     for side in [0, 1]:
@@ -140,7 +108,6 @@ def process_dumbbell_shoulderPress(data):
 
     # 운동 한 회가 완료되면 카운트 증가 --------------------------------------
     # press_counter가 None이 아닌 경우에만 카운팅 로직 실행
-    print(f'❌ 카운터 시작 {global_state.counter}')
 
     if global_state.counter:
         # 왼팔 기준으로 운동 횟수 업데이트
@@ -149,7 +116,6 @@ def process_dumbbell_shoulderPress(data):
         # 운동 한 회가 완료되면 카운트 증가
         if completed:
             count = global_state.counter.count
-            print(f"✅ 운동 횟수 변경: {count}회")
             data["count"] = count
         elif "count" not in data:
             # 이전 카운트 값이 없으면 현재 카운트 추가
@@ -158,20 +124,3 @@ def process_dumbbell_shoulderPress(data):
 
 
     return data  # 수정된 data
-
-
-"""
-{
- "phoneNumber": "01012345678",
- "exerciseType": "dumbbell_shoulder_press",
- "timestamp": "2025-04-15T13:28:56.928217",
- "landmarks": [
-   { "x": 0.1, "y": 0.5, "z": 0.1 },  // LEFT_SHOULDER
-   { "x": 0.3, "y": 0.5, "z": 0.1 },  // RIGHT_SHOULDER
-   { "x": 0.1, "y": 0.3, "z": 0.1 },  // LEFT_ELBOW (updated)
-   { "x": 0.3, "y": 0.3, "z": 0.1 },  // RIGHT_ELBOW (updated)
-   { "x": 0.1, "y": 0.3, "z": 0.25 }, // LEFT_WRIST (updated, right-angle direction)
-   { "x": 0.3, "y": 0.3, "z": 0.25 }  // RIGHT_WRIST (updated, right-angle direction)
- ]
-}
-"""

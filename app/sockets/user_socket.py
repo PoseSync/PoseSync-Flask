@@ -77,7 +77,7 @@ def register_user_socket(socketio):
                     prediction = fall_model.predict(model_input, verbose=0)
                     # 임계값 0.8로 수정해서 낙상 감지 기준을 더 빡빡하게
 
-                    fall = bool(prediction[0][0] > 111.0)
+                    fall = bool(prediction[0][0] > 0.8)
 
                     print(f"예측값: {prediction[0][0]}")
                     if fall and not fall_detected:
@@ -139,6 +139,8 @@ def register_user_socket(socketio):
         # 현재 연결된 클라이언트의 SID 저장
         client_sid = request.sid
 
+        result = {}
+
         try:
             # 클라이언트에서 받은 원본 랜드마크 데이터
             landmarks = data.get('landmarks', [])
@@ -178,7 +180,7 @@ def register_user_socket(socketio):
 
             fall = False
 
-            print(f'클라이언트에서 받자마자 => {data}')
+            # print(f'클라이언트에서 받자마자 => {data}')
 
             # 1. 가속도 계산 및 시퀀스 버퍼에 누적
             acceleration = calculate_acceleration(landmarks)
@@ -187,7 +189,7 @@ def register_user_socket(socketio):
                 vec = acceleration["head_acceleration"] + acceleration["pelvis_acceleration"]
                 accel_seq_buffer.append(vec)
 
-                print(f"[{time.time()}] ✅ accel 추가됨, 현재 길이: {len(accel_seq_buffer)}")
+                # print(f"[{time.time()}] ✅ accel 추가됨, 현재 길이: {len(accel_seq_buffer)}")
 
                 # 버퍼가 30개 이상일 때 매 프레임마다 예측 수행
                 if len(accel_seq_buffer) >= 30:
@@ -195,7 +197,7 @@ def register_user_socket(socketio):
                     prediction = fall_model.predict(model_input, verbose=0)
                     # 임계값 0.8로 수정해서 낙상 감지 기준을 더 빡빡하게
 
-                    fall = bool(prediction[0][0] > 111.0)
+                    fall = bool(prediction[0][0] > 0.8)
 
                     print(f"예측값: {prediction[0][0]}")
                     if fall and not fall_detected:
@@ -205,15 +207,24 @@ def register_user_socket(socketio):
                         wait_time = 30  # 30초 대기
                         interval = 1    # 1초 간격으로 확인
 
+                        result['is_fall'] = fall
+                        socketio.emit('result', result, to=client_sid)
+                        print(f'클라이언트에게 낙상 감지 알림 전송 => {result}')
                         for _ in range(wait_time):
+
                             if not is_exist:
                                 print("사람이 없어졌습니다. 호출 중단.")
                                 is_exist = True
                                 break
                             time.sleep(interval)
-                        else:
-                            print("############# 전화 걸기 ###############")
-                            call_user()
+                            print(f'{interval}초 대기 중...')
+
+                        # 🔥 핵심: 낙상 감지 로직 완료 후 상태 초기화
+                        fall_detected = False
+
+                        print("############# 전화 걸기 ###############")
+                        call_user()
+                        print('전화 걸기 완료')
 
             # 사람 중심 좌표계로 변환 및 정규화
             transformed_landmarks, transform_data = process_pose_landmarks(landmarks)

@@ -49,6 +49,16 @@ def initialize_exercise_counter(exercise_type: str):
             initial_state="down"
         )
 
+    elif exercise_type == 'side_lateral_raise':
+        counter = RepCounter(
+            anchor_id=PoseLandmark.LEFT_SHOULDER,
+            moving_id=PoseLandmark.LEFT_ELBOW,
+            axis='y',
+            down_offset=0.15,  # 레터럴 레이즈는 더 큰 움직임 범위
+            up_offset=0.05,
+            initial_state="down"  # 팔을 내린 상태에서 시작
+        )
+
 
 # 전역변수 초기화 함수
 def reset_globals():
@@ -58,7 +68,7 @@ def reset_globals():
     """
     global accel_seq_buffer, fall_detected, is_first
     global current_user_body_type, current_user_bone_lengths
-    global client_sid, counter
+    global client_sid, counter, is_exist
 
     # 기본 플래그‧버퍼 초기화
     accel_seq_buffer.clear()
