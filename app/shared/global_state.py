@@ -74,7 +74,7 @@ def reset_globals():
     global client_sid, counter, is_exist
 
     # 기본 플래그‧버퍼 초기화
-    accel_seq_buffer.clear()
+    # accel_seq_buffer.clear()
     fall_detected = False
     is_first      = True
     current_user_body_type    = None
