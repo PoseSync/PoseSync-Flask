@@ -61,8 +61,6 @@ def get_exercise_set_service(phone_number):
 def get_next_exercise_set(current_id):
     # 현재 ExerciseSet 객체 조회
     current_set = ExerciseSet.query.filter_by(id=current_id).first()
-    if not current_set or current_set.routine_group is None:
-        return None
 
     # 같은 routine_group이고, id가 현재 id보다 1 큰 객체 조회
     next_set = ExerciseSet.query.filter_by(
@@ -75,15 +73,8 @@ def get_next_exercise_set(current_id):
 
 # ExerciseSet 엔티티를 받아 UPDATE 한 후 저장하는 함수
 def save_updated_exercise_set(exercise_set:ExerciseSet):
-    try:
-        db.session.add(exercise_set)
-        print(f"ExerciseSet 업데이트: {exercise_set.id-1}, is_finished: {exercise_set.is_finished}, is_success: {exercise_set.is_success}")
-        db.session.commit()
-        print("✅ ExerciseSet 업데이트 성공")
-
-    except Exception as e:
-        db.session.rollback()
-        raise e
+    db.session.add(exercise_set)
+    db.session.commit()
 
     routine_group = exercise_set.routine_group
     
@@ -107,15 +98,12 @@ def save_updated_exercise_set(exercise_set:ExerciseSet):
     return exercise_set, latest_index
 
 # 전화번호로 해당 User와 가장 가까운 ExerciseSet 반환 함수
-def get_exercise_set(phone_number):
+def get_exercise_set_with_phone_number(phone_number):
     user = User.query.filter_by(phone_number=phone_number).first()
 
     # 최신 순으로 정렬  
     # 가장 최근 1개
     exercise_set = ExerciseSet.query.filter_by(user_id=user.user_id, is_finished=False).order_by(ExerciseSet.created_at.asc()).first()
-
-    if not exercise_set:
-        raise ValueError("No exercise sets found")
 
     return exercise_set
 

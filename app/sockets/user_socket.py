@@ -8,7 +8,7 @@ from flask_socketio import emit, disconnect
 from app.ai.ai_model import fall_model
 from app.controllers.user_controller import handle_data_controller
 from app.services.body_service.body_spec_service import get_all_body_info
-from app.services.user_info_service import get_exercise_set, save_updated_exercise_set, get_next_exercise_set
+from app.services.user_info_service import get_exercise_set_with_phone_number, save_updated_exercise_set, get_next_exercise_set
 # 공유 전역 상태 가져오기
 from app.shared.global_state import (
     accel_seq_buffer,
@@ -334,7 +334,7 @@ def register_user_socket(socketio):
         print(f"disconnect_client: 현재 운동 횟수: {current_count}")
 
         # 받아온 phoneNumber로 ExerciseSet 객체 GET
-        exercise_set = get_exercise_set(phone_number)
+        exercise_set = get_exercise_set_with_phone_number(phone_number)
         print(f"disconnect_client: exercise_set: {exercise_set}")
 
         # exercise_set이 None이 아닌 경우에만 업데이트 수행
