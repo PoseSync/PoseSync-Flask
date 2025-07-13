@@ -16,6 +16,13 @@
 </p>
 
 &nbsp;
+## 🎥 Demo Video
+
+[![Demo Video](https://img.youtube.com/vi/VsujVQyxNhc/0.jpg)](https://www.youtube.com/watch?v=VsujVQyxNhc)
+<br>
+영상시청을 위해 화면을 터치해주시길 바랍니다.
+
+&nbsp;
 ## ✨ Main Feature
 ![image](https://github.com/user-attachments/assets/99c9b526-061d-42b7-87b7-45185173466e)
 
@@ -107,4 +114,3 @@
 | **!HOTFIX**          | 급하게 치명적인 버그를 고쳐야 하는 경우                      |
 
 ex. `Feat : 새로운 기능 추가`
-
